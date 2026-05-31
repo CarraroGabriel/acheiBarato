@@ -1,0 +1,49 @@
+# ==========================================
+# 1. CONFIGURAÇÕES DO AMBIENTE / IDE (Android Studio & VS Code)
+# ==========================================
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+
+# ==========================================
+# 2. BACKEND PHP
+# ==========================================
+backend_php/.env
+
+# ==========================================
+# 3. FLUTTER / DART (Caminhos ajustados para a subpasta)
+# ==========================================
+# Arquivos gerais de log e temporários
+app_flutter/*.class
+app_flutter/*.log
+app_flutter/*.pyc
+app_flutter/*.swp
+app_flutter/.DS_Store
+app_flutter/.atom/
+app_flutter/.build/
+app_flutter/.buildlog/
+app_flutter/.history
+app_flutter/.svn/
+app_flutter/.swiftpm/
+app_flutter/migrate_working_dir/
+
+# Arquivos internos e caches do Flutter
+app_flutter/**/doc/api/
+app_flutter/**/ios/Flutter/.last_build_id
+app_flutter/.dart_tool/
+app_flutter/.flutter-plugins-dependencies
+app_flutter/.pub-cache/
+app_flutter/.pub/
+app_flutter/build/
+app_flutter/coverage/
+
+# Ofuscação e Símbolos
+app_flutter/app.*.symbols
+app_flutter/app.*.map.json
+
+# Artefatos de compilação do Android
+app_flutter/android/app/debug
+app_flutter/android/app/profile
+app_flutter/android/app/release
