@@ -54,6 +54,6 @@ function tratarRotasUsuario(string $metodo, array $partesUri): void
             break;
 
         default:
-            Response::json(false, "MÈtodo HTTP n„o permitido.", null, 405);
+            Response::json(false, "M√©todo HTTP n√£o permitido.", null, 405);
     }
 }
