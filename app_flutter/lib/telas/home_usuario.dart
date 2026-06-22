@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:achei_barato/Widgets/app_bar.dart';
+import 'package:achei_barato/widgets/app_bar.dart';
 
 class HomeUsuario extends StatefulWidget {
   const HomeUsuario({super.key});

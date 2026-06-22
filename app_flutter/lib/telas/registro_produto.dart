@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:achei_barato/Widgets/app_bar.dart';
-import 'package:achei_barato/Widgets/botao_primario.dart';
+import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/botao_primario.dart';
 
 class RegistroProduto extends StatefulWidget {
   const RegistroProduto({super.key});
