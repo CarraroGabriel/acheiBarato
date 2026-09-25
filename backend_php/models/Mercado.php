@@ -1,67 +1,136 @@
 <?php
 
+require_once __DIR__ . '/../config/Database.php';
+
 class Mercado
 {
-    public ?int $id_mercado;
-    public string $nu_cnpj;
-    public string $nm_mercado;
-    public string $ds_email;
-    public int $nu_cep;
-    public string $nm_endereco;
-    public string $ds_senha;
-    public bool $fl_motoboy;
-    public string $ds_foto_mercado;
-    public float $nu_latitude;
-    public float $nu_longitude;
-    public float $nu_avg_nota;
-    public int $nul_avaliacoes;
+    private PDO $conexao;
 
-    public function __construct(
-        ?int $id_mercado,
-        string $nu_cnpj,
-        string $nm_mercado,
-        string $ds_email,
-        int $nu_cep,
-        string $nm_endereco,
-        string $ds_senha,
-        bool $fl_motoboy,
-        string $ds_foto_mercado,
-        float $nu_latitude,
-        float $nu_longitude,
-        float $nu_avg_nota,
-        int $nul_avaliacoes
-    ) {
-        $this->id_mercado      = $id_mercado;
-        $this->nu_cnpj         = $nu_cnpj;
-        $this->nm_mercado      = $nm_mercado;
-        $this->ds_email        = $ds_email;
-        $this->nu_cep          = $nu_cep;
-        $this->nm_endereco     = $nm_endereco;
-        $this->ds_senha        = $ds_senha;
-        $this->fl_motoboy      = $fl_motoboy;
-        $this->ds_foto_mercado = $ds_foto_mercado;
-        $this->nu_latitude     = $nu_latitude;
-        $this->nu_longitude    = $nu_longitude;
-        $this->nu_avg_nota     = $nu_avg_nota;
-        $this->nul_avaliacoes  = $nul_avaliacoes;
+    public function __construct()
+    {
+        $database = new Database();
+        $this->conexao = $database->conectar();
     }
 
-    public static function fromArray(array $dados): Mercado
+    public function listar(): array
     {
-        return new Mercado(
-            isset($dados["id_mercado"]) ? (int) $dados["id_mercado"] : null,
-            trim($dados["nu_cnpj"] ?? ""),
-            trim($dados["nm_mercado"] ?? ""),
-            trim($dados["ds_email"] ?? ""),
-            (int) ($dados["nu_cep"] ?? 0),
-            trim($dados["nm_endereco"] ?? ""),
-            trim($dados["ds_senha"] ?? ""),
-            (bool) ($dados["fl_motoboy"] ?? false),
-            trim($dados["ds_foto_mercado"] ?? ""),
-            (float) ($dados["nu_latitude"] ?? 0.0),
-            (float) ($dados["nu_longitude"] ?? 0.0),
-            (float) ($dados["nu_avg_nota"] ?? 0.0),
-            (int) ($dados["nul_avaliacoes"] ?? 0)
-        );
+        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+                       fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                       nu_avg_nota, nul_avaliacoes
+                FROM tb_mercado
+                ORDER BY nm_mercado';
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function consultarPorId(int $idMercado): ?array
+    {
+        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+                       fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                       nu_avg_nota, nul_avaliacoes
+                FROM tb_mercado
+                WHERE id_mercado = :id_mercado';
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $mercado = $stmt->fetch();
+        return $mercado ?: null;
+    }
+
+    public function inserir(array $dados): array
+    {
+        $sql = 'INSERT INTO tb_mercado
+                    (nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, ds_senha,
+                     fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                     nu_avg_nota, nul_avaliacoes)
+                VALUES
+                    (:nu_cnpj, :nm_mercado, :ds_email, :nu_cep, :nm_endereco, :ds_senha,
+                     :fl_motoboy, :ds_foto_mercado, :nu_latitude, :nu_longitude,
+                     :nu_avg_nota, :nul_avaliacoes)
+                RETURNING id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+                          fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                          nu_avg_nota, nul_avaliacoes';
+
+        $senhaHash = password_hash($dados['ds_senha'], PASSWORD_DEFAULT);
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(':nu_cnpj', $dados['nu_cnpj']);
+        $stmt->bindValue(':nm_mercado', $dados['nm_mercado']);
+        $stmt->bindValue(':ds_email', $dados['ds_email']);
+        $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
+        $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
+        $stmt->bindValue(':ds_senha', $senhaHash);
+        $stmt->bindValue(':fl_motoboy', $dados['fl_motoboy'], PDO::PARAM_BOOL);
+        $stmt->bindValue(':ds_foto_mercado', $dados['ds_foto_mercado']);
+        $stmt->bindValue(':nu_latitude', $dados['nu_latitude']);
+        $stmt->bindValue(':nu_longitude', $dados['nu_longitude']);
+        $stmt->bindValue(':nu_avg_nota', $dados['nu_avg_nota']);
+        $stmt->bindValue(':nul_avaliacoes', $dados['nul_avaliacoes'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public function alterar(int $idMercado, array $dados): ?array
+    {
+        $campos = [
+            'nu_cnpj = :nu_cnpj',
+            'nm_mercado = :nm_mercado',
+            'ds_email = :ds_email',
+            'nu_cep = :nu_cep',
+            'nm_endereco = :nm_endereco',
+            'fl_motoboy = :fl_motoboy',
+            'ds_foto_mercado = :ds_foto_mercado',
+            'nu_latitude = :nu_latitude',
+            'nu_longitude = :nu_longitude',
+            'nu_avg_nota = :nu_avg_nota',
+            'nul_avaliacoes = :nul_avaliacoes',
+        ];
+
+        if (!empty($dados['ds_senha'])) {
+            $campos[] = 'ds_senha = :ds_senha';
+        }
+
+        $sql = 'UPDATE tb_mercado
+                SET ' . implode(', ', $campos) . '
+                WHERE id_mercado = :id_mercado
+                RETURNING id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+                          fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                          nu_avg_nota, nul_avaliacoes';
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(':nu_cnpj', $dados['nu_cnpj']);
+        $stmt->bindValue(':nm_mercado', $dados['nm_mercado']);
+        $stmt->bindValue(':ds_email', $dados['ds_email']);
+        $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
+        $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
+        $stmt->bindValue(':fl_motoboy', $dados['fl_motoboy'], PDO::PARAM_BOOL);
+        $stmt->bindValue(':ds_foto_mercado', $dados['ds_foto_mercado']);
+        $stmt->bindValue(':nu_latitude', $dados['nu_latitude']);
+        $stmt->bindValue(':nu_longitude', $dados['nu_longitude']);
+        $stmt->bindValue(':nu_avg_nota', $dados['nu_avg_nota']);
+        $stmt->bindValue(':nul_avaliacoes', $dados['nul_avaliacoes'], PDO::PARAM_INT);
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+
+        if (!empty($dados['ds_senha'])) {
+            $stmt->bindValue(':ds_senha', password_hash($dados['ds_senha'], PASSWORD_DEFAULT));
+        }
+
+        $stmt->execute();
+        $mercado = $stmt->fetch();
+        return $mercado ?: null;
+    }
+
+    public function excluir(int $idMercado): bool
+    {
+        $sql = 'DELETE FROM tb_mercado WHERE id_mercado = :id_mercado';
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
     }
 }

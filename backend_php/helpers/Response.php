@@ -15,7 +15,7 @@ class Response
             "sucesso" => $sucesso,
             "mensagem" => $mensagem,
             "dados" => $dados
-        ], JSON_UNESCAPED_UNICODE);
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         exit;
     }

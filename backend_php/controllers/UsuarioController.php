@@ -1,109 +1,128 @@
 <?php
 
-require_once __DIR__ . "/../repositories/UsuarioRepository.php";
-require_once __DIR__ . "/../helpers/Response.php";
+require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../helpers/Response.php';
 
 class UsuarioController
 {
-    private UsuarioRepository $repository;
+    private Usuario $usuario;
 
-    public function __construct(UsuarioRepository $repository)
+    public function __construct()
     {
-        $this->repository = $repository;
+        $this->usuario = new Usuario();
     }
 
     public function listar(): void
     {
         try {
-            $usuarios = $this->repository->listar();
-            Response::json(true, "Usuários consultados com sucesso.", $usuarios, 200);
-        } catch (Exception $e) {
-            Response::json(false, "Erro ao consultar usuários.", $e->getMessage(), 500);
+            Response::json(true, 'Usuários encontrados.', $this->usuario->listar(), 200);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao consultar usuários.', null, 500);
         }
     }
 
-    public function consultar(int $id_usuario): void
+    public function consultar(int $idUsuario): void
     {
         try {
-            $usuario = $this->repository->consultarPorId($id_usuario);
+            $dados = $this->usuario->consultarPorId($idUsuario);
 
-            if (!$usuario) {
-                Response::json(false, "Usuário não encontrado.", null, 404);
+            if ($dados === null) {
+                Response::json(false, 'Usuário não encontrado.', null, 404);
             }
 
-            Response::json(true, "Usuário consultado com sucesso.", $usuario, 200);
-        } catch (Exception $e) {
-            Response::json(false, "Erro ao consultar usuário.", $e->getMessage(), 500);
+            Response::json(true, 'Usuário encontrado.', $dados, 200);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao consultar usuário.', null, 500);
         }
     }
 
-    public function inserir(array $dados): void
+    public function inserir(): void
     {
-        try {
-            $this->validarDadosObrigatorios($dados);
-            $usuario = Usuario::fromArray($dados);
-            $usuarioInserido = $this->repository->inserir($usuario);
+        $dados = $this->lerJson();
 
-            Response::json(true, "Usuário inserido com sucesso.", $usuarioInserido, 201);
-        } catch (Exception $e) {
-            Response::json(false, "Erro ao inserir usuário.", $e->getMessage(), 400);
+        try {
+            $dados = $this->validar($dados, true);
+            $resultado = $this->usuario->inserir($dados);
+            Response::json(true, 'Usuário cadastrado com sucesso.', $resultado, 201);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                Response::json(false, 'CPF ou e-mail já cadastrado.', null, 409);
+            }
+            Response::json(false, 'Erro ao cadastrar usuário.', null, 500);
+        } catch (InvalidArgumentException $e) {
+            Response::json(false, $e->getMessage(), null, 400);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao cadastrar usuário.', null, 500);
         }
     }
 
-    public function alterar(int $id_usuario, array $dados): void
+    public function alterar(int $idUsuario): void
     {
+        $dados = $this->lerJson();
+
         try {
-            $this->validarDadosObrigatorios($dados);
+            $dados = $this->validar($dados, false);
+            $resultado = $this->usuario->alterar($idUsuario, $dados);
 
-            $usuario = Usuario::fromArray([
-                "id_usuario" => $id_usuario,
-                "nm_login" => $dados["nm_login"],
-                "ds_senha" => $dados["ds_senha"]
-            ]);
-
-            $usuarioAlterado = $this->repository->alterar($usuario);
-
-            if (!$usuarioAlterado) {
-                Response::json(false, "Usuário não encontrado para alteração.", null, 404);
+            if ($resultado === null) {
+                Response::json(false, 'Usuário não encontrado.', null, 404);
             }
 
-            Response::json(true, "Usuário alterado com sucesso.", $usuarioAlterado, 200);
-        } catch (Exception $e) {
-            Response::json(false, "Erro ao alterar usuário.", $e->getMessage(), 400);
+            Response::json(true, 'Usuário alterado com sucesso.', $resultado, 200);
+        } catch (InvalidArgumentException $e) {
+            Response::json(false, $e->getMessage(), null, 400);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao alterar usuário.', null, 500);
         }
     }
 
-    public function excluir(int $id_usuario): void
+    public function excluir(int $idUsuario): void
     {
         try {
-            $excluiu = $this->repository->excluir($id_usuario);
-
-            if (!$excluiu) {
-                Response::json(false, "Usuário não encontrado para exclusão.", null, 404);
+            if (!$this->usuario->excluir($idUsuario)) {
+                Response::json(false, 'Usuário não encontrado.', null, 404);
             }
 
-            Response::json(true, "Usuário excluído com sucesso.", null, 200);
-        } catch (Exception $e) {
-            Response::json(false, "Erro ao excluir usuário.", $e->getMessage(), 500);
+            Response::json(true, 'Usuário removido com sucesso.', ['id_usuario' => $idUsuario], 200);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao remover usuário.', null, 500);
         }
     }
 
-    private function validarDadosObrigatorios(array $dados): void
+    private function lerJson(): array
     {
-        if (!isset($dados["nm_login"]) || trim($dados["nm_login"]) === "") {
-            throw new Exception("O campo nm_login é obrigatório.");
+        $dados = json_decode(file_get_contents('php://input'), true);
+        return is_array($dados) ? $dados : [];
+    }
+
+    private function validar(array $dados, bool $senhaObrigatoria): array
+    {
+        $obrigatorios = ['nu_cpf', 'nm_usuario', 'ds_email', 'dt_nascimento'];
+
+        foreach ($obrigatorios as $campo) {
+            if (!isset($dados[$campo]) || trim((string) $dados[$campo]) === '') {
+                throw new InvalidArgumentException("O campo {$campo} é obrigatório.");
+            }
         }
 
-        if (!isset($dados["ds_senha"]) || trim($dados["ds_senha"]) === "") {
-            throw new Exception("O campo ds_senha é obrigatório.");
+        if ($senhaObrigatoria && (!isset($dados['ds_senha']) || trim((string) $dados['ds_senha']) === '')) {
+            throw new InvalidArgumentException('O campo ds_senha é obrigatório.');
         }
 
-        if (strlen($dados["nm_login"]) > 30) {
-            throw new Exception("O campo nm_login deve possuir no máximo 30 caracteres.");
+        $cpf = preg_replace('/\D/', '', (string) $dados['nu_cpf']);
+        if (strlen($cpf) !== 11) {
+            throw new InvalidArgumentException('O CPF deve possuir 11 dígitos.');
+        }
+        $dados['nu_cpf'] = $cpf;
+
+        if (!filter_var($dados['ds_email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Informe um e-mail válido.');
         }
 
-        if (strlen($dados["ds_senha"]) > 50) {
-            throw new Exception("O campo ds_senha deve possuir no máximo 50 caracteres.");
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $dados['dt_nascimento'])) {
+            throw new InvalidArgumentException('A data de nascimento deve estar no formato AAAA-MM-DD.');
         }
+
+        return $dados;
     }
 }

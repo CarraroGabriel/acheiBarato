@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/cadastro_mercado.dart';
 import 'package:achei_barato/telas/cadastro_usuario.dart';
+import 'package:achei_barato/telas/home_usuario.dart';
+import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
 import 'package:achei_barato/widgets/tela_base.dart';
 
@@ -15,11 +18,92 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   late bool _isUsuario;
+  final _identificadorController = TextEditingController();
+  final _senhaController = TextEditingController();
+  bool _carregando = false;
 
   @override
   void initState() {
     super.initState();
     _isUsuario = widget.isUsuario;
+  }
+
+  @override
+  void dispose() {
+    _identificadorController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _entrar() async {
+    final identificador = _identificadorController.text.trim();
+    final senha = _senhaController.text;
+
+    if (identificador.isEmpty || senha.isEmpty) {
+      _mostrarMensagem('Preencha o identificador e a senha.');
+      return;
+    }
+
+    setState(() => _carregando = true);
+
+    try {
+      final resposta = await ApiService.post('login', {
+        'tipo': _isUsuario ? 'usuario' : 'mercado',
+        'identificador': identificador,
+        'ds_senha': senha,
+      });
+
+      if (!mounted) return;
+
+      final dados = Map<String, dynamic>.from(resposta['dados'] as Map);
+
+      if (_isUsuario) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeUsuario(
+              idUsuario: _toInt(dados['id_usuario']),
+              nomeUsuario: (dados['nm_usuario'] ?? 'Usuário').toString(),
+            ),
+          ),
+          (_) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PerfilMercado(
+              idMercado: _toInt(dados['id_mercado']),
+              modoLojista: true,
+            ),
+          ),
+          (_) => false,
+        );
+      }
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível conectar ao servidor.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  int _toInt(dynamic valor) => int.tryParse(valor.toString()) ?? 0;
+
+  void _mostrarMensagem(String mensagem) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem)),
+    );
+  }
+
+  void _trocarTipo(bool usuario) {
+    setState(() {
+      _isUsuario = usuario;
+      _identificadorController.clear();
+      _senhaController.clear();
+    });
   }
 
   @override
@@ -41,21 +125,19 @@ class _LoginState extends State<Login> {
                   label: 'Usuário',
                   icon: Icons.person,
                   isSelected: _isUsuario,
-                  onTap: () => setState(() => _isUsuario = true),
+                  onTap: () => _trocarTipo(true),
                 ),
                 _buildToggleButton(
                   label: 'Mercado',
                   icon: Icons.store,
                   isSelected: !_isUsuario,
-                  onTap: () => setState(() => _isUsuario = false),
+                  onTap: () => _trocarTipo(false),
                 ),
               ],
             ),
           ),
         ),
-
         const SizedBox(height: 12),
-
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
@@ -68,16 +150,14 @@ class _LoginState extends State<Login> {
               const Text(
                 'Faça seu Login',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _identificadorController,
                 keyboardType: _isUsuario
                     ? TextInputType.emailAddress
-                    : TextInputType.text,
+                    : TextInputType.number,
                 decoration: InputDecoration(
                   labelText: _isUsuario ? 'Email' : 'CNPJ',
                   border: const OutlineInputBorder(),
@@ -87,9 +167,10 @@ class _LoginState extends State<Login> {
                 ),
               ),
               const SizedBox(height: 16),
-              const TextField(
+              TextField(
+                controller: _senhaController,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Senha',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.lock),
@@ -98,23 +179,23 @@ class _LoginState extends State<Login> {
             ],
           ),
         ),
-
         const SizedBox(height: 24),
-
-        BotaoPrimario(
-          texto: 'Entrar',
-          onPressed: () {},
-          paddingHorizontal: 150,
-        ),
-
+        if (_carregando)
+          const CircularProgressIndicator()
+        else
+          BotaoPrimario(
+            texto: 'Entrar',
+            onPressed: _entrar,
+            paddingHorizontal: 150,
+          ),
         const SizedBox(height: 8),
-
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            _mostrarMensagem('Recuperação de senha ainda não implementada.');
+          },
           style: TextButton.styleFrom(foregroundColor: Colors.black),
           child: const Text('Esqueceu a senha?'),
         ),
-
         const SizedBox(height: 16),
         const Text('Não possui login?'),
         Row(
@@ -124,9 +205,7 @@ class _LoginState extends State<Login> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const CadastroUsuario(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const CadastroUsuario()),
                 );
               },
               child: const Text(
@@ -139,9 +218,7 @@ class _LoginState extends State<Login> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const CadastroMercado(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const CadastroMercado()),
                 );
               },
               child: const Text(

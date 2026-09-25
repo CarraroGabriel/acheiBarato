@@ -1,14 +1,153 @@
 import 'package:flutter/material.dart';
+import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/telas/edita_produto.dart';
+import 'package:achei_barato/telas/login.dart';
+import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 
-class PerfilMercado extends StatelessWidget {
-  const PerfilMercado({super.key});
+class PerfilMercado extends StatefulWidget {
+  final int idMercado;
+  final bool modoLojista;
+
+  const PerfilMercado({
+    super.key,
+    required this.idMercado,
+    this.modoLojista = false,
+  });
+
+  @override
+  State<PerfilMercado> createState() => _PerfilMercadoState();
+}
+
+class _PerfilMercadoState extends State<PerfilMercado> {
+  bool _carregando = true;
+  String? _erro;
+  Map<String, dynamic>? _mercado;
+  List<Map<String, dynamic>> _produtos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    setState(() {
+      _carregando = true;
+      _erro = null;
+    });
+
+    try {
+      final rotaProdutos = widget.modoLojista
+          ? 'produto_mercado?mercado=${widget.idMercado}'
+          : 'mercados/${widget.idMercado}/promocoes';
+
+      final resultados = await Future.wait([
+        ApiService.get('mercados/${widget.idMercado}'),
+        ApiService.get(rotaProdutos),
+      ]);
+
+      if (!mounted) return;
+
+      setState(() {
+        _mercado = Map<String, dynamic>.from(resultados[0]['dados'] as Map);
+        _produtos = _listaDeMapas(resultados[1]['dados']);
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _erro = e.mensagem);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _erro = 'Não foi possível conectar ao servidor.');
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _listaDeMapas(dynamic dados) {
+    if (dados is! List) return [];
+    return dados
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AcheiBaratoAppBar(),
-      body: SingleChildScrollView(
+      appBar: AcheiBaratoAppBar(
+        exibirBotaoVoltar: !widget.modoLojista,
+        acoes: widget.modoLojista
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const Login(isUsuario: false),
+                      ),
+                      (_) => false,
+                    );
+                  },
+                ),
+              ]
+            : const [],
+      ),
+      floatingActionButton: widget.modoLojista
+          ? FloatingActionButton.extended(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              onPressed: () async {
+                final alterou = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RegistroProduto(idMercado: widget.idMercado),
+                  ),
+                );
+
+                if (alterou == true) _carregarDados();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Produto'),
+            )
+          : null,
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_carregando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_erro != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_erro!),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: _carregarDados,
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final mercado = _mercado ?? {};
+    final foto = (mercado['ds_foto_mercado'] ?? '').toString();
+    final temMotoboy = _toBool(mercado['fl_motoboy']);
+
+    return RefreshIndicator(
+      onRefresh: _carregarDados,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -16,12 +155,7 @@ class PerfilMercado extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.bottomCenter,
               children: [
-                Container(
-                  height: 130,
-                  color: Colors.red,
-                ),
-
-                // Foto de perfil sobreposta à borda do banner
+                Container(height: 130, color: Colors.red),
                 Positioned(
                   bottom: -50,
                   child: Container(
@@ -39,42 +173,25 @@ class PerfilMercado extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.grey.shade200,
-                      child: ClipOval(
-                        child: Image.network(
-                          'https://via.placeholder.com/100',
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.store,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
+                      backgroundImage: foto.isNotEmpty ? NetworkImage(foto) : null,
+                      child: foto.isEmpty
+                          ? const Icon(Icons.store, size: 50, color: Colors.grey)
+                          : null,
                     ),
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 60),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Mercadinho Teste',
+                (mercado['nm_mercado'] ?? 'Mercado').toString(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            // Chips de informações
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Wrap(
@@ -85,21 +202,26 @@ class PerfilMercado extends StatelessWidget {
                   _buildChip(
                     icon: Icons.star,
                     iconColor: Colors.amber,
-                    label: '0.0  •  100 avaliações',
+                    label:
+                        '${_formatarNota(mercado['nu_avg_nota'])}  •  ${_toInt(mercado['nul_avaliacoes'])} avaliações',
                     bgColor: Colors.amber.shade50,
                   ),
                   _buildChip(
                     icon: Icons.delivery_dining,
-                    iconColor: Colors.green.shade600,
-                    label: 'Tele-entrega disponível',
-                    bgColor: Colors.green.shade50,
+                    iconColor: temMotoboy
+                        ? Colors.green.shade600
+                        : Colors.grey.shade600,
+                    label: temMotoboy
+                        ? 'Tele-entrega disponível'
+                        : 'Sem tele-entrega',
+                    bgColor: temMotoboy
+                        ? Colors.green.shade50
+                        : Colors.grey.shade100,
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
@@ -115,7 +237,7 @@ class PerfilMercado extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Rua X, 123 — Bairro Y\nGravataí, RS — CEP 90000-000',
+                        '${mercado['nm_endereco'] ?? ''}\nCEP ${mercado['nu_cep'] ?? ''}',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade700,
@@ -127,53 +249,44 @@ class PerfilMercado extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    children: const [
-                      Icon(Icons.local_offer, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
+                    children: [
+                      Icon(
+                        widget.modoLojista ? Icons.inventory_2 : Icons.local_offer,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        'Produtos em Promoção',
-                        style: TextStyle(
+                        widget.modoLojista
+                            ? 'Produtos do Mercado'
+                            : 'Produtos em Promoção',
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
-                  _buildCardProduto(
-                    nomeProduto: 'Arroz Integral 5kg',
-                    marca: 'Tio João',
-                    categoria: 'Grãos',
-                    preco: 'R\$ 18,90',
-                  ),
-                  _buildCardProduto(
-                    nomeProduto: 'Leite Integral 1L',
-                    marca: 'Elegê',
-                    categoria: 'Laticínios',
-                    preco: 'R\$ 4,49',
-                  ),
-                  _buildCardProduto(
-                    nomeProduto: 'Óleo de Soja 900ml',
-                    marca: 'Liza',
-                    categoria: 'Óleos',
-                    preco: 'R\$ 6,79',
-                  ),
+                  if (_produtos.isEmpty)
+                    Text(
+                      widget.modoLojista
+                          ? 'Nenhum produto cadastrado ainda.'
+                          : 'Nenhuma promoção disponível no momento.',
+                    )
+                  else
+                    ..._produtos.map(_buildCardProduto),
                 ],
               ),
             ),
-
-            const SizedBox(height: 24),
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -199,23 +312,15 @@ class PerfilMercado extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardProduto({
-    required String nomeProduto,
-    required String marca,
-    required String categoria,
-    required String preco,
-  }) {
-    return Container(
+  Widget _buildCardProduto(Map<String, dynamic> produto) {
+    final conteudo = Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
@@ -233,72 +338,48 @@ class PerfilMercado extends StatelessWidget {
             ),
             child: const Icon(Icons.image, color: Colors.grey, size: 30),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  nomeProduto,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  (produto['nm_produto'] ?? '').toString(),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  marca,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  '${produto['nm_marca'] ?? ''} • ${produto['ds_categoria'] ?? ''}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  categoria,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
+                if (widget.modoLojista) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Estoque: ${produto['nu_qtde'] ?? 0} • ${_toBool(produto['fl_disponivel']) ? 'Disponível' : 'Indisponível'}',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  preco,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'PROMOÇÃO',
+              if (_toBool(produto['fl_promocao']))
+                const Text(
+                  'PROMO',
                   style: TextStyle(
+                    color: Colors.red,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
+                ),
+              Text(
+                _formatarValor(produto['nu_valor']),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
                 ),
               ),
             ],
@@ -306,5 +387,40 @@ class PerfilMercado extends StatelessWidget {
         ],
       ),
     );
+
+    if (!widget.modoLojista) return conteudo;
+
+    return GestureDetector(
+      onTap: () async {
+        final alterou = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EdicaoProduto(
+              idProdutoMercado: _toInt(produto['id_produto_mercado']),
+            ),
+          ),
+        );
+
+        if (alterou == true) _carregarDados();
+      },
+      child: conteudo,
+    );
+  }
+
+  String _formatarValor(dynamic valor) {
+    final numero = double.tryParse(valor.toString().replaceAll(',', '.')) ?? 0;
+    return 'R\$ ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  String _formatarNota(dynamic valor) {
+    final numero = double.tryParse(valor.toString().replaceAll(',', '.')) ?? 0;
+    return numero.toStringAsFixed(1);
+  }
+
+  int _toInt(dynamic valor) => int.tryParse(valor.toString()) ?? 0;
+
+  bool _toBool(dynamic valor) {
+    if (valor is bool) return valor;
+    return valor.toString().toLowerCase() == 'true' || valor.toString() == '1';
   }
 }

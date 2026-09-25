@@ -23,7 +23,7 @@ CREATE TABLE Tb_Mercado (
                 ds_email VARCHAR(50) NOT NULL,
                 nu_cep INTEGER NOT NULL,
                 nm_endereco VARCHAR(50) NOT NULL,
-                ds_senha VARCHAR(15) NOT NULL,
+                ds_senha VARCHAR(255) NOT NULL, -- valor alto para caber o hash de senha
                 fl_motoboy BOOLEAN NOT NULL,
                 ds_foto_mercado VARCHAR(50) NOT NULL,
                 nu_latitude NUMERIC NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE Tb_Usuario (
                 nm_usuario VARCHAR(50) NOT NULL,
                 ds_email VARCHAR(50) NOT NULL,
                 dt_nascimento DATE NOT NULL,
-                ds_senha VARCHAR(15) NOT NULL,
+                ds_senha VARCHAR(255) NOT NULL, -- valor alto para caber o hash de senha
                 CONSTRAINT pk_usuario PRIMARY KEY (id_usuario)
 );
 
@@ -65,6 +65,12 @@ CREATE TABLE Tb_Usuario (
 CREATE UNIQUE INDEX tb_usuario_idx
  ON Tb_Usuario
  ( nu_cpf );
+
+ /* O login do usuário é feito por e-mail. Para evitar duas contas com o mesmo
+    identificador de login, criamos índices únicos de e-mail.*/
+CREATE UNIQUE INDEX IF NOT EXISTS tb_usuario_email_idx 
+ON tb_usuario 
+(LOWER(ds_email));
 
 CREATE TABLE Tb_Carrinho (
                 id_carrinho INTEGER NOT NULL,
@@ -154,3 +160,5 @@ REFERENCES achei_barato.Tb_Usuario (id_usuario);
 ALTER TABLE Tb_Item_Carrinho ADD CONSTRAINT tb_carrinho_tb_item_carrinho_fk
 FOREIGN KEY (id_carrinho)
 REFERENCES achei_barato.Tb_Carrinho (id_carrinho);
+
+ALTER TABLE tb_mercado ADD CONSTRAINT tb_mercado_email_uk UNIQUE (ds_email);

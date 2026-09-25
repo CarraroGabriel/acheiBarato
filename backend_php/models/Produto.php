@@ -1,35 +1,39 @@
 <?php
 
+require_once __DIR__ . '/../config/Database.php';
+
 class Produto
 {
-    public ?int $id_produto;
-    public string $nm_produto;
-    public string $nm_marca;
-    public string $ds_categoria;
-    public string $ds_foto_produto;
+    private PDO $conexao;
 
-    public function __construct(
-        ?int $id_produto,
-        string $nm_produto,
-        string $nm_marca,
-        string $ds_categoria,
-        string $ds_foto_produto
-    ) {
-        $this->id_produto      = $id_produto;
-        $this->nm_produto      = $nm_produto;
-        $this->nm_marca        = $nm_marca;
-        $this->ds_categoria    = $ds_categoria;
-        $this->ds_foto_produto = $ds_foto_produto;
+    public function __construct()
+    {
+        $database = new Database();
+        $this->conexao = $database->conectar();
     }
 
-    public static function fromArray(array $dados): Produto
+    public function listar(): array
     {
-        return new Produto(
-            isset($dados["id_produto"]) ? (int) $dados["id_produto"] : null,
-            trim($dados["nm_produto"] ?? ""),
-            trim($dados["nm_marca"] ?? ""),
-            trim($dados["ds_categoria"] ?? ""),
-            trim($dados["ds_foto_produto"] ?? "")
-        );
+        $sql = 'SELECT id_produto, nm_produto, nm_marca, ds_categoria, ds_foto_produto
+                FROM tb_produto
+                ORDER BY nm_produto';
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function consultarPorId(int $idProduto): ?array
+    {
+        $sql = 'SELECT id_produto, nm_produto, nm_marca, ds_categoria, ds_foto_produto
+                FROM tb_produto
+                WHERE id_produto = :id_produto';
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $produto = $stmt->fetch();
+        return $produto ?: null;
     }
 }
