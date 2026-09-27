@@ -69,9 +69,9 @@ class ProdutoMercado
         }
 
         $sql = 'INSERT INTO tb_produto_mercado
-                    (id_produto, id_mercado, nu_valor, nu_qtde, fl_promocao, fl_disponivel)
+                    (id_produto, id_mercado, nu_valor, nu_qtde, fl_promocao, fl_disponivel, dt_atualizacao)
                 VALUES
-                    (:id_produto, :id_mercado, :nu_valor, :nu_qtde, :fl_promocao, :fl_disponivel)
+                    (:id_produto, :id_mercado, :nu_valor, :nu_qtde, :fl_promocao, :fl_disponivel, CURRENT_DATE)
                 RETURNING id_produto_mercado, id_produto, id_mercado,
                           nu_valor, nu_qtde, fl_promocao, fl_disponivel, dt_atualizacao';
 

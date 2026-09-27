@@ -48,11 +48,11 @@ class UsuarioController
             if ($e->getCode() === '23505') {
                 Response::json(false, 'CPF ou e-mail já cadastrado.', null, 409);
             }
-            Response::json(false, 'Erro ao cadastrar usuário.', null, 500);
+            Response::json(false, 'Erro ao cadastrar usuário.', $e->getMessage(), 500);
         } catch (InvalidArgumentException $e) {
             Response::json(false, $e->getMessage(), null, 400);
         } catch (Throwable $e) {
-            Response::json(false, 'Erro ao cadastrar usuário.', null, 500);
+            Response::json(false, 'Erro ao cadastrar usuário.', $e->getMessage(), 500);
         }
     }
 

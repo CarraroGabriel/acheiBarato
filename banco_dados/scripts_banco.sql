@@ -162,3 +162,59 @@ FOREIGN KEY (id_carrinho)
 REFERENCES achei_barato.Tb_Carrinho (id_carrinho);
 
 ALTER TABLE tb_mercado ADD CONSTRAINT tb_mercado_email_uk UNIQUE (ds_email);
+
+-- ============================================================
+-- CORRECAO: as tabelas foram criadas sem sequence/auto-incremento,
+-- entao todo INSERT falhava com:
+--   "null value in column id_xxx violates not-null constraint"
+-- Este script adiciona sequences + defaults em todas as tabelas.
+-- ============================================================
+
+-- tb_usuario --------------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_usuario START 1;
+ALTER TABLE tb_usuario
+    ALTER COLUMN id_usuario SET DEFAULT nextval('sq_tb_usuario');
+
+-- tb_mercado --------------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado START 1;
+ALTER TABLE tb_mercado
+    ALTER COLUMN id_mercado SET DEFAULT nextval('sq_tb_mercado');
+
+-- tb_produtos -------------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_produtos START 1;
+ALTER TABLE tb_produtos
+    ALTER COLUMN id_produto SET DEFAULT nextval('sq_tb_produtos');
+
+-- tb_produto_mercado ------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_produto_mercado START 1;
+ALTER TABLE tb_produto_mercado
+    ALTER COLUMN id_produto_mercado SET DEFAULT nextval('sq_tb_produto_mercado');
+
+-- tb_carrinho -------------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_carrinho START 1;
+ALTER TABLE tb_carrinho
+    ALTER COLUMN id_carrinho SET DEFAULT nextval('sq_tb_carrinho');
+
+-- tb_item_carrinho --------------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_item_carrinho START 1;
+ALTER TABLE tb_item_carrinho
+    ALTER COLUMN id_item_carrinho SET DEFAULT nextval('sq_tb_item_carrinho');
+
+-- tb_avaliacao_mercado ----------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_avaliacao_mercado START 1;
+ALTER TABLE tb_avaliacao_mercado
+    ALTER COLUMN id_avaliacao SET DEFAULT nextval('sq_tb_avaliacao_mercado');
+
+-- tb_mercado_favorito -----------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado_favorito START 1;
+ALTER TABLE tb_mercado_favorito
+    ALTER COLUMN id_mercado_fav SET DEFAULT nextval('sq_tb_mercado_favorito');
+
+-- tb_produto_favorito -----------------------------------------
+CREATE SEQUENCE IF NOT EXISTS sq_tb_produto_fav START 1;
+ALTER TABLE tb_produto_favorito
+    ALTER COLUMN id_prod_fav SET DEFAULT nextval('sq_tb_produto_fav');
+
+-- tb_produto_mercado: dt_atualizacao tambem nao tinha default --
+ALTER TABLE tb_produto_mercado
+    ALTER COLUMN dt_atualizacao SET DEFAULT CURRENT_DATE;
