@@ -76,10 +76,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
         exibirMenu: true,
         acoes: [
           IconButton(
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: Colors.white,
-            ),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {},
           ),
         ],
@@ -144,7 +141,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
             children: [
               Container(
                 color: Colors.red.shade50,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 child: Row(
                   children: [
                     const Icon(Icons.location_on, color: Colors.red, size: 20),
@@ -164,7 +164,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                         foregroundColor: Colors.red,
                         padding: EdgeInsets.zero,
                       ),
-                      child: const Text('Alterar', style: TextStyle(fontSize: 12)),
+                      child: const Text(
+                        'Alterar',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ),
                   ],
                 ),
@@ -178,7 +181,11 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.map, size: 48, color: Colors.grey.shade500),
+                          Icon(
+                            Icons.map,
+                            size: 48,
+                            color: Colors.grey.shade500,
+                          ),
                           Text(
                             'Mapa será integrado na etapa de geolocalização',
                             style: TextStyle(color: Colors.grey.shade600),
@@ -187,7 +194,11 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                       ),
                     ),
                     const Center(
-                      child: Icon(Icons.my_location, color: Colors.red, size: 34),
+                      child: Icon(
+                        Icons.my_location,
+                        color: Colors.red,
+                        size: 34,
+                      ),
                     ),
                   ],
                 ),
@@ -208,7 +219,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                     children: [
                       const Text(
                         'Mercados',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       if (_mercados.isEmpty)
@@ -219,8 +233,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: _mercados.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 12),
-                            itemBuilder: (_, i) => _buildCardMercado(_mercados[i]),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (_, i) =>
+                                _buildCardMercado(_mercados[i]),
                           ),
                         ),
                     ],
@@ -238,7 +254,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                           SizedBox(width: 8),
                           Text(
                             'Promoções em Destaque',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -249,14 +268,16 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: 0.82,
-                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
+                                childAspectRatio: 0.82,
+                              ),
                           itemCount: _produtosDestaque.length,
-                          itemBuilder: (_, i) => _buildCardProduto(_produtosDestaque[i]),
+                          itemBuilder: (_, i) =>
+                              _buildCardProduto(_produtosDestaque[i]),
                         ),
                     ],
                   ),
@@ -284,11 +305,6 @@ class _HomeUsuarioState extends State<HomeUsuario> {
             icon: Icon(Icons.favorite_outline),
             activeIcon: Icon(Icons.favorite),
             label: 'Favoritos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_offer_outlined),
-            activeIcon: Icon(Icons.local_offer),
-            label: 'Promoções',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart_outlined),
@@ -322,9 +338,8 @@ class _HomeUsuarioState extends State<HomeUsuario> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PerfilMercado(
-              idMercado: _toInt(mercado['id_mercado']),
-            ),
+            builder: (_) =>
+                PerfilMercado(idMercado: _toInt(mercado['id_mercado'])),
           ),
         );
       },
@@ -432,7 +447,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                   top: 6,
                   left: 6,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(4),
