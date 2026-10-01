@@ -375,13 +375,20 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   ),
                 ),
               Text(
-                _formatarValor(produto['nu_valor']),
+                _formatarValor(produto['nu_valor_final'] ?? produto['nu_valor']),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.red,
                 ),
               ),
+              if (widget.modoLojista &&
+                  _toBool(produto['fl_promocao']) &&
+                  _toInt(produto['nu_desconto']) > 0)
+                Text(
+                  'Base: ${_formatarValor(produto['nu_valor'])} • -${_toInt(produto['nu_desconto'])}%',
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                ),
             ],
           ),
         ],

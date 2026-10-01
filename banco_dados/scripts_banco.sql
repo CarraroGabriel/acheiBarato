@@ -196,12 +196,12 @@ REFERENCES achei_barato.Tb_Carrinho (id_carrinho);
 
 ALTER TABLE tb_mercado ADD CONSTRAINT tb_mercado_email_uk UNIQUE (ds_email);
 
-/* ============================================================ 
+/*  
 Horario de funcionamento por dia da semana 
 nu_dia_semana: 0 = domingo ... 6 = sabado (mesma convencao do date('w') do PHP).
 Um mercado pode ter mais de uma faixa no mesmo dia (ex.: pausa para almoco).
 Limitacao: hr_fechamento > hr_abertura (nao cobre horario que vira a meia-noite). 
-============================================================ */
+*/
 
 
 CREATE SEQUENCE IF NOT EXISTS sq_tb_horario_mercado START 1;
@@ -222,3 +222,11 @@ FOREIGN KEY (id_mercado)
 REFERENCES tb_mercado (id_mercado);
 
 CREATE INDEX IF NOT EXISTS tb_horario_mercado_idx ON tb_horario_mercado (id_mercado, nu_dia_semana);
+
+/* Alteração visando o erro de valor de promoção sobre valor de promoção*/
+
+ALTER TABLE tb_produto_mercado
+  ADD COLUMN IF NOT EXISTS nu_desconto INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE tb_produto_mercado
+  ADD CONSTRAINT ck_produto_mercado_desconto CHECK (nu_desconto BETWEEN 0 AND 100);

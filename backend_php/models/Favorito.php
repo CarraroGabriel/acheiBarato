@@ -69,7 +69,8 @@ class Favorito
     {
         $sql = 'SELECT p.id_produto, p.nm_produto, p.nm_marca, p.ds_categoria, p.ds_foto_produto,
                        pm.id_produto_mercado, pm.nu_valor, pm.nu_qtde,
-                       pm.fl_promocao, pm.fl_disponivel, pm.dt_atualizacao,
+                       pm.fl_promocao, pm.fl_disponivel, pm.dt_atualizacao, pm.nu_desconto,
+                       ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final,
                        m.id_mercado, m.nm_mercado, m.nu_latitude, m.nu_longitude, m.fl_motoboy
                 FROM tb_produto p
                 LEFT JOIN tb_produto_mercado pm ON pm.id_produto = p.id_produto
@@ -112,6 +113,8 @@ class Favorito
                 'id_mercado'         => (int) $linha['id_mercado'],
                 'nm_mercado'         => $linha['nm_mercado'],
                 'nu_valor'           => (float) $linha['nu_valor'],
+                'nu_desconto'        => (int) $linha['nu_desconto'],
+                'nu_valor_final'     => (float) $linha['nu_valor_final'],
                 'nu_qtde'            => (int) $linha['nu_qtde'],
                 'fl_promocao'        => $this->paraBool($linha['fl_promocao']),
                 'fl_disponivel'      => $this->paraBool($linha['fl_disponivel']),
@@ -140,7 +143,7 @@ class Favorito
             if (!$m['fl_disponivel']) {
                 continue;
             }
-            $centavos = (int) round($m['nu_valor'] * 100);
+            $centavos = (int) round($m['nu_valor_final'] * 100);
             if ($menor === null || $centavos < $menor) {
                 $menor = $centavos;
             }
@@ -149,7 +152,7 @@ class Favorito
         foreach ($mercados as &$m) {
             $m['melhor_preco'] = $menor !== null
                 && $m['fl_disponivel']
-                && (int) round($m['nu_valor'] * 100) === $menor;
+                && (int) round($m['nu_valor_final'] * 100) === $menor;
         }
         unset($m);
 
@@ -157,7 +160,7 @@ class Favorito
             if ($a['fl_disponivel'] !== $b['fl_disponivel']) {
                 return $a['fl_disponivel'] ? -1 : 1;
             }
-            return $a['nu_valor'] <=> $b['nu_valor'];
+            return $a['nu_valor_final'] <=> $b['nu_valor_final'];
         });
 
         return $mercados;

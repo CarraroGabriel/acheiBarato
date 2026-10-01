@@ -432,7 +432,7 @@ class _FavoritosState extends State<Favoritos> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _formatarValor(item['nu_valor']),
+                  _formatarValor(item['nu_valor_final'] ?? item['nu_valor']),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,

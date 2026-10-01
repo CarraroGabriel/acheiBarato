@@ -463,7 +463,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
           const SizedBox(height: 4),
           Text(
-            _formatarValor(produto['nu_valor']),
+            _formatarValor(produto['nu_valor_final'] ?? produto['nu_valor']),
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,

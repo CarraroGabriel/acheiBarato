@@ -18,7 +18,9 @@ class ProdutoMercado
                        p.nm_produto, p.nm_marca, p.ds_categoria, p.ds_foto_produto,
                        m.nm_mercado,
                        pm.nu_valor, pm.nu_qtde, pm.fl_promocao, pm.fl_disponivel,
-                       pm.dt_atualizacao
+                       pm.dt_atualizacao,
+                       pm.nu_desconto,
+                       ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final
                 FROM tb_produto_mercado pm
                 INNER JOIN tb_produto p ON p.id_produto = pm.id_produto
                 INNER JOIN tb_mercado m ON m.id_mercado = pm.id_mercado';
@@ -45,7 +47,9 @@ class ProdutoMercado
                        p.nm_produto, p.nm_marca, p.ds_categoria, p.ds_foto_produto,
                        m.nm_mercado,
                        pm.nu_valor, pm.nu_qtde, pm.fl_promocao, pm.fl_disponivel,
-                       pm.dt_atualizacao
+                       pm.dt_atualizacao,
+                       pm.nu_desconto,
+                       ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final
                 FROM tb_produto_mercado pm
                 INNER JOIN tb_produto p ON p.id_produto = pm.id_produto
                 INNER JOIN tb_mercado m ON m.id_mercado = pm.id_mercado
@@ -61,7 +65,6 @@ class ProdutoMercado
 
     public function registrar(array $dados): array
     {
-        // Reutiliza o produto cadastrado ou cria um novo, para nao duplicar.
         $idProduto = $this->buscarOuCriarProduto($dados);
 
         if ($this->jaRegistrado($idProduto, $dados['id_mercado'])) {
@@ -94,10 +97,12 @@ class ProdutoMercado
                     nu_qtde = :nu_qtde,
                     fl_promocao = :fl_promocao,
                     fl_disponivel = :fl_disponivel,
-                    dt_atualizacao = CURRENT_TIMESTAMP
+                    dt_atualizacao = CURRENT_TIMESTAMP,
+                    nu_desconto = :nu_desconto
                 WHERE id_produto_mercado = :id_produto_mercado
                 RETURNING id_produto_mercado, id_produto, id_mercado,
-                          nu_valor, nu_qtde, fl_promocao, fl_disponivel, dt_atualizacao';
+                          nu_valor, nu_qtde, fl_promocao, fl_disponivel, 
+                          dt_atualizacao, nu_desconto';
 
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(':nu_valor', $dados['nu_valor']);
@@ -105,6 +110,7 @@ class ProdutoMercado
         $stmt->bindValue(':fl_promocao', $dados['fl_promocao'], PDO::PARAM_BOOL);
         $stmt->bindValue(':fl_disponivel', $dados['fl_disponivel'], PDO::PARAM_BOOL);
         $stmt->bindValue(':id_produto_mercado', $idProdutoMercado, PDO::PARAM_INT);
+        $stmt->bindValue(':nu_desconto', $dados['nu_desconto'], PDO::PARAM_INT);
         $stmt->execute();
 
         $produtoMercado = $stmt->fetch();
@@ -126,7 +132,9 @@ class ProdutoMercado
                        p.nm_produto, p.nm_marca, p.ds_categoria, p.ds_foto_produto,
                        m.nm_mercado,
                        pm.nu_valor, pm.nu_qtde, pm.fl_promocao, pm.fl_disponivel,
-                       pm.dt_atualizacao
+                       pm.dt_atualizacao,
+                       pm.nu_desconto,
+                       ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final
                 FROM tb_produto_mercado pm
                 INNER JOIN tb_produto p ON p.id_produto = pm.id_produto
                 INNER JOIN tb_mercado m ON m.id_mercado = pm.id_mercado
@@ -137,15 +145,18 @@ class ProdutoMercado
             $sql .= ' AND pm.id_mercado = :id_mercado';
         }
 
+        // Promoções dos mercados favoritos aparecem primeiro, sem esconder as demais.
+        $ordem = 'pm.dt_atualizacao DESC';
+
         if ($idUsuario !== null) {
-            $sql .= ' AND pm.id_mercado IN (
+            $ordem = '(pm.id_mercado IN (
                           SELECT id_mercado
                           FROM tb_mercado_favorito
                           WHERE id_usuario = :id_usuario
-                      )';
+                      )) DESC, ' . $ordem;
         }
 
-        $sql .= ' ORDER BY pm.dt_atualizacao DESC';
+        $sql .= ' ORDER BY ' . $ordem;
 
         $stmt = $this->conexao->prepare($sql);
 

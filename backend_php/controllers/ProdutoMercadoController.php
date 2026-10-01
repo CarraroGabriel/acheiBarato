@@ -72,8 +72,20 @@ class ProdutoMercadoController
             $dados['fl_promocao'] = (bool) $dados['fl_promocao'];
             $dados['fl_disponivel'] = (bool) $dados['fl_disponivel'];
 
+            $dados['nu_desconto'] = $dados['fl_promocao']
+                ? (int) ($dados['nu_desconto'] ?? 0)
+                : 0; // desmarcou a promoção: zera o desconto
+
             if ($dados['nu_valor'] < 0 || $dados['nu_qtde'] < 0) {
                 throw new InvalidArgumentException('Valor e quantidade não podem ser negativos.');
+            }
+
+            if ($dados['nu_desconto'] < 0 || $dados['nu_desconto'] > 100) {
+                throw new InvalidArgumentException('Desconto inválido.');
+            }
+
+            if ($dados['fl_promocao'] && $dados['nu_desconto'] === 0) {
+                throw new InvalidArgumentException('Informe o percentual de desconto da promoção.');
             }
 
             $resultado = $this->produtoMercado->alterar($idProdutoMercado, $dados);

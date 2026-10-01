@@ -62,6 +62,8 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
         _disponivel = _toBool(produto['fl_disponivel']);
         _valorController.text = _numero(produto['nu_valor']).toStringAsFixed(2);
         _qtdeController.text = _toInt(produto['nu_qtde']).toString();
+        final desconto = _toInt(produto['nu_desconto']);
+        _descontoSelecionado = desconto > 0 ? desconto : null;
       });
     } on ApiException catch (e) {
       if (mounted) setState(() => _erro = e.mensagem);
@@ -85,13 +87,9 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
       return;
     }
 
-    var valorFinal = valorDigitado;
-
-    // O ER atual possui fl_promocao e nu_valor, mas não possui uma coluna
-    // para guardar o percentual. Por isso o percentual é usado para calcular
-    // o preço final, e o backend persiste apenas o preço resultante.
-    if (_emPromocao && _descontoSelecionado != null) {
-      valorFinal = valorDigitado * (1 - (_descontoSelecionado! / 100));
+    if (_emPromocao && _descontoSelecionado == null) {
+      _mostrarMensagem('Selecione o percentual de desconto.');
+      return;
     }
 
     setState(() => _salvando = true);
@@ -100,9 +98,10 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
       await ApiService.put(
         'produto_mercado/${widget.idProdutoMercado}',
         {
-          'nu_valor': double.parse(valorFinal.toStringAsFixed(2)),
+          'nu_valor': double.parse(valorDigitado.toStringAsFixed(2)), // sempre o base
           'nu_qtde': quantidade,
           'fl_promocao': _emPromocao,
+          'nu_desconto': _emPromocao ? _descontoSelecionado : 0,
           'fl_disponivel': _disponivel,
         },
       );
@@ -321,6 +320,7 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
             TextField(
               controller: _valorController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Valor / Valor base (R\$)',
                 border: OutlineInputBorder(),
@@ -399,13 +399,21 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
                     ),
                     if (_descontoSelecionado != null) ...[
                       const SizedBox(height: 10),
-                      Text(
-                        'O backend salvará o preço final após aplicar $_descontoSelecionado%. O ER atual não guarda o percentual separadamente.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.red.shade700,
-                        ),
-                      ),
+                      Builder(builder: (_) {
+                        final base = double.tryParse(
+                              _valorController.text.replaceAll(',', '.'),
+                            ) ??
+                            0;
+                        final valorFinal =
+                            base * (1 - _descontoSelecionado! / 100);
+                        return Text(
+                          'Preço final: R\$ ${valorFinal.toStringAsFixed(2).replaceAll('.', ',')}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade700,
+                          ),
+                        );
+                      }),
                     ],
                   ],
                 ),
