@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
-import 'package:achei_barato/telas/login.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav.dart';
+import 'package:achei_barato/widgets/menu_lateral.dart';
 
 class HomeUsuario extends StatefulWidget {
   final int idUsuario;
@@ -81,57 +81,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(color: Colors.red),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, color: Colors.red, size: 30),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Olá, ${widget.nomeUsuario}!',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Configurações'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Ajuda'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Sair', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const Login()),
-                  (_) => false,
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: MenuLateral(nome: widget.nomeUsuario),
       body: RefreshIndicator(
         onRefresh: _carregarDados,
         child: SingleChildScrollView(

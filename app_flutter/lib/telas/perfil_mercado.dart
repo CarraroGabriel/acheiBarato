@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/edita_produto.dart';
-import 'package:achei_barato/telas/login.dart';
 import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/menu_lateral.dart';
 
 class PerfilMercado extends StatefulWidget {
   final int idMercado;
@@ -44,20 +44,20 @@ class _PerfilMercadoState extends State<PerfilMercado> {
     });
 
     try {
-      final rotaProdutos = widget.modoLojista
-          ? 'produto_mercado?mercado=${widget.idMercado}'
-          : 'mercados/${widget.idMercado}/promocoes';
-
       final resultados = await Future.wait([
         ApiService.get('mercados/${widget.idMercado}'),
-        ApiService.get(rotaProdutos),
+        ApiService.get('produto_mercado?mercado=${widget.idMercado}'),
       ]);
 
       if (!mounted) return;
 
+      final produtos = _listaDeMapas(resultados[1]['dados']);
+
       setState(() {
         _mercado = Map<String, dynamic>.from(resultados[0]['dados'] as Map);
-        _produtos = _listaDeMapas(resultados[1]['dados']);
+        _produtos = widget.modoLojista
+            ? produtos
+            : produtos.where((p) => _toBool(p['fl_disponivel'])).toList();
       });
     } on ApiException catch (e) {
       if (mounted) setState(() => _erro = e.mensagem);
@@ -122,23 +122,14 @@ class _PerfilMercadoState extends State<PerfilMercado> {
     return Scaffold(
       appBar: AcheiBaratoAppBar(
         exibirBotaoVoltar: !widget.modoLojista,
-        acoes: widget.modoLojista
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const Login(isUsuario: false),
-                      ),
-                      (_) => false,
-                    );
-                  },
-                ),
-              ]
-            : const [],
+        exibirMenu: widget.modoLojista,
       ),
+      drawer: widget.modoLojista
+          ? MenuLateral(
+              nome: (_mercado?['nm_mercado'] ?? 'Mercado').toString(),
+              isUsuario: false,
+            )
+          : null,
       floatingActionButton: widget.modoLojista
           ? FloatingActionButton.extended(
               backgroundColor: Colors.red,
@@ -330,16 +321,14 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                       Icon(
                         widget.modoLojista
                             ? Icons.inventory_2
-                            : Icons.local_offer,
+                            : Icons.shopping_basket,
                         color: Colors.red,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        widget.modoLojista
-                            ? 'Produtos do Mercado'
-                            : 'Produtos em Promoção',
-                        style: const TextStyle(
+                      const Text(
+                        'Produtos do Mercado',
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -351,7 +340,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                     Text(
                       widget.modoLojista
                           ? 'Nenhum produto cadastrado ainda.'
-                          : 'Nenhuma promoção disponível no momento.',
+                          : 'Nenhum produto disponível no momento.',
                     )
                   else
                     ..._produtos.map(_buildCardProduto),

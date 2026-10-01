@@ -4,6 +4,7 @@ import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav.dart';
+import 'package:achei_barato/widgets/menu_lateral.dart';
 
 class Favoritos extends StatefulWidget {
   final int idUsuario;
@@ -84,7 +85,12 @@ class _FavoritosState extends State<Favoritos> {
   void _abrirMercado(int idMercado) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => PerfilMercado(idMercado: idMercado)),
+      MaterialPageRoute(
+        builder: (_) => PerfilMercado(
+          idMercado: idMercado,
+          idUsuario: widget.idUsuario,
+        ),
+      ),
     );
   }
 
@@ -101,6 +107,7 @@ class _FavoritosState extends State<Favoritos> {
           ),
         ],
       ),
+      drawer: MenuLateral(nome: widget.nomeUsuario),
       body: _buildBody(),
       bottomNavigationBar: BottomNav(
         indiceAtual: 2,

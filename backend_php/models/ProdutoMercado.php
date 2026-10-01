@@ -33,7 +33,8 @@ class ProdutoMercado
             $sql .= ' WHERE pm.id_mercado = :id_mercado';
         }
 
-        $sql .= ' ORDER BY ip.ds_item_produto, ip.nm_marca';
+        // Produtos em promoção ocupam o topo da lista.
+        $sql .= ' ORDER BY pm.fl_promocao DESC, ip.ds_item_produto, ip.nm_marca';
 
         $stmt = $this->conexao->prepare($sql);
 
@@ -64,7 +65,7 @@ class ProdutoMercado
         try {
             $idProduto = $dados['id_produto'] !== null
                 ? $this->validarProduto($dados['id_produto'])
-                : $this->buscarOuCriarProduto($dados['nm_produto']);
+                : $this->buscarOuCriarProduto($dados['nm_produto'], $dados['id_categoria']);
 
             $idTipo = $dados['id_tipo'] !== null
                 ? $this->validarTipo($dados['id_tipo'], $idProduto)
@@ -155,7 +156,6 @@ class ProdutoMercado
             $sql .= ' AND pm.id_mercado = :id_mercado';
         }
 
-        // Promoções dos mercados favoritos aparecem primeiro, sem esconder as demais.
         $ordem = 'pm.dt_atualizacao DESC';
 
         if ($idUsuario !== null) {
@@ -182,15 +182,26 @@ class ProdutoMercado
         return $stmt->fetchAll();
     }
 
-    // Produto novo entra na categoria OUTRO;
-    private function buscarOuCriarProduto(string $nome): int
+    private function buscarOuCriarProduto(string $nome, ?int $idCategoria): int
     {
+        if ($idCategoria !== null) {
+            $this->exigirRegistro(
+                'SELECT 1 FROM tb_categoria WHERE id_categoria = :id',
+                [':id' => $idCategoria],
+                'Categoria não encontrada.'
+            );
+        }
+
         return $this->buscarOuCriar(
             'SELECT id_produto AS id FROM tb_produto WHERE UPPER(nm_produto) = UPPER(:nome)',
             "INSERT INTO tb_produto (nm_produto, id_categoria)
-             VALUES (UPPER(:nome), (SELECT id_categoria FROM tb_categoria WHERE nm_categoria = 'OUTRO'))
+             VALUES (UPPER(:nome), COALESCE(
+                 CAST(:id_categoria AS INTEGER),
+                 (SELECT id_categoria FROM tb_categoria WHERE nm_categoria = 'OUTRO')
+             ))
              RETURNING id_produto AS id",
-            [':nome' => $nome]
+            [':nome' => $nome],
+            [':id_categoria' => $idCategoria]
         );
     }
 
@@ -232,9 +243,13 @@ class ProdutoMercado
             ]
         );
     }
-
-    private function buscarOuCriar(string $sqlBusca, string $sqlInsercao, array $parametros): int
-    {
+    
+    private function buscarOuCriar(
+        string $sqlBusca,
+        string $sqlInsercao,
+        array $parametros,
+        array $parametrosInsercao = []
+    ): int {
         $stmt = $this->conexao->prepare($sqlBusca);
         $stmt->execute($parametros);
         $registro = $stmt->fetch();
@@ -244,7 +259,7 @@ class ProdutoMercado
         }
 
         $stmt = $this->conexao->prepare($sqlInsercao);
-        $stmt->execute($parametros);
+        $stmt->execute(array_merge($parametros, $parametrosInsercao));
         return (int) $stmt->fetch()['id'];
     }
 

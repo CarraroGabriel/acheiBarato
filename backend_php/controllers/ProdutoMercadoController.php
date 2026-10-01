@@ -74,7 +74,7 @@ class ProdutoMercadoController
 
             $dados['nu_desconto'] = $dados['fl_promocao']
                 ? (int) ($dados['nu_desconto'] ?? 0)
-                : 0; // desmarcou a promoção: zera o desconto
+                : 0;
 
             if ($dados['nu_valor'] < 0 || $dados['nu_qtde'] < 0) {
                 throw new InvalidArgumentException('Valor e quantidade não podem ser negativos.');
@@ -148,12 +148,12 @@ class ProdutoMercadoController
             }
         }
 
-        // Produto, tipo e marca chegam por id (existente) ou por nome (novo).
         [$dados['id_produto'], $dados['nm_produto']] = $this->lerReferencia($dados, 'produto', 50);
         [$dados['id_tipo'], $dados['nm_tipo']] = $this->lerReferencia($dados, 'tipo', 30);
         [$dados['id_marca'], $dados['nm_marca']] = $this->lerReferencia($dados, 'marca', 40);
 
         $dados['id_mercado'] = (int) $dados['id_mercado'];
+        $dados['id_categoria'] = (int) ($dados['id_categoria'] ?? 0) ?: null; // usada só se o produto for novo
         $dados['id_unidade'] = (int) $dados['id_unidade'];
         $dados['nu_medida'] = $this->normalizarNumeroDecimal($dados['nu_medida']);
         $dados['nu_valor'] = $this->normalizarNumeroDecimal($dados['nu_valor']);
@@ -180,9 +180,6 @@ class ProdutoMercadoController
         return $dados;
     }
 
-    /**
-     * Lê id_<campo> ou nm_<campo>. Retorna [id, null] ou [null, nome normalizado].
-     */
     private function lerReferencia(array $dados, string $campo, int $tamanhoMaximo): array
     {
         $id = (int) ($dados["id_{$campo}"] ?? 0);

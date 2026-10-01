@@ -6,10 +6,7 @@ import 'package:achei_barato/widgets/botao_primario.dart';
 class RegistroProduto extends StatefulWidget {
   final int idMercado;
 
-  const RegistroProduto({
-    super.key,
-    required this.idMercado,
-  });
+  const RegistroProduto({super.key, required this.idMercado});
 
   @override
   State<RegistroProduto> createState() => _RegistroProdutoState();
@@ -28,11 +25,13 @@ class _RegistroProdutoState extends State<RegistroProduto> {
   final _marcaFocus = FocusNode();
 
   // Listas vindas da API.
+  List<Map<String, dynamic>> _categorias = [];
   List<Map<String, dynamic>> _produtos = [];
   List<Map<String, dynamic>> _marcas = [];
   List<Map<String, dynamic>> _unidades = [];
 
-  // Produto existente selecionado, com seus tipos e marcas sugeridas.
+  int? _idCategoria;
+
   Map<String, dynamic>? _produtoSelecionado;
   int? _idUnidade;
 
@@ -69,6 +68,7 @@ class _RegistroProdutoState extends State<RegistroProduto> {
 
     try {
       final resultados = await Future.wait([
+        ApiService.get('categorias'),
         ApiService.get('produtos'),
         ApiService.get('marcas'),
         ApiService.get('unidades'),
@@ -77,9 +77,10 @@ class _RegistroProdutoState extends State<RegistroProduto> {
       if (!mounted) return;
 
       setState(() {
-        _produtos = _listaDeMapas(resultados[0]['dados']);
-        _marcas = _listaDeMapas(resultados[1]['dados']);
-        _unidades = _listaDeMapas(resultados[2]['dados']);
+        _categorias = _listaDeMapas(resultados[0]['dados']);
+        _produtos = _listaDeMapas(resultados[1]['dados']);
+        _marcas = _listaDeMapas(resultados[2]['dados']);
+        _unidades = _listaDeMapas(resultados[3]['dados']);
       });
     } on ApiException catch (e) {
       if (mounted) setState(() => _erroListas = e.mensagem);
@@ -92,10 +93,18 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     }
   }
 
-  // Ao digitar ou escolher um produto, carrega tipos, marcas e categoria
-  // se ele já existir; caso contrário, o produto será criado como novo.
+  void _onCategoriaAlterada(int? idCategoria) {
+    setState(() {
+      _idCategoria = idCategoria;
+      _produtoSelecionado = null;
+      _produtoController.clear();
+      _tipoController.clear();
+      _marcaController.clear();
+    });
+  }
+
   void _onProdutoAlterado(String texto) {
-    final existente = _buscarPorNome(_produtos, 'nm_produto', texto);
+    final existente = _buscarPorNome(_produtosDaCategoria, 'nm_produto', texto);
 
     if (existente == null) {
       setState(() => _produtoSelecionado = null);
@@ -123,8 +132,11 @@ class _RegistroProdutoState extends State<RegistroProduto> {
 
       if (!mounted) return;
 
-      // Ignora a resposta se o usuário já trocou de produto.
-      final atual = _buscarPorNome(_produtos, 'nm_produto', _produtoController.text);
+      final atual = _buscarPorNome(
+        _produtosDaCategoria,
+        'nm_produto',
+        _produtoController.text,
+      );
       if (_toInt(atual?['id_produto']) != idProduto) return;
 
       setState(() => _produtoSelecionado = produto);
@@ -141,6 +153,19 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     final nomeProduto = _produtoController.text.trim();
     final nomeTipo = _tipoController.text.trim();
     final nomeMarca = _marcaController.text.trim();
+
+    if (_idCategoria == null) {
+      _mostrarMensagem('Selecione a categoria.');
+      return;
+    }
+
+    final emOutraCategoria = _produtoEmOutraCategoria;
+    if (emOutraCategoria != null) {
+      _mostrarMensagem(
+        'Este produto pertence à categoria ${emOutraCategoria['nm_categoria']}.',
+      );
+      return;
+    }
 
     if (nomeProduto.isEmpty ||
         nomeTipo.isEmpty ||
@@ -167,7 +192,11 @@ class _RegistroProdutoState extends State<RegistroProduto> {
       return;
     }
 
-    final produto = _buscarPorNome(_produtos, 'nm_produto', nomeProduto);
+    final produto = _buscarPorNome(
+      _produtosDaCategoria,
+      'nm_produto',
+      nomeProduto,
+    );
     final tipo = _buscarPorNome(_tiposDoProduto, 'nm_tipo', nomeTipo);
     final marca = _buscarPorNome(_marcas, 'nm_marca', nomeMarca);
 
@@ -176,6 +205,7 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     try {
       await ApiService.post('produto_mercado', {
         'id_mercado': widget.idMercado,
+        'id_categoria': _idCategoria,
         ..._referencia('produto', produto, nomeProduto),
         ..._referencia('tipo', tipo, nomeTipo),
         ..._referencia('marca', marca, nomeMarca),
@@ -202,7 +232,6 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     }
   }
 
-  // Registro existente vai por id; texto novo vai por nome para o backend criar.
   Map<String, dynamic> _referencia(
     String campo,
     Map<String, dynamic>? registro,
@@ -215,23 +244,30 @@ class _RegistroProdutoState extends State<RegistroProduto> {
 
   void _mostrarMensagem(String mensagem) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
   }
+
+  List<Map<String, dynamic>> get _produtosDaCategoria => _produtos
+      .where((p) => _toInt(p['id_categoria']) == _idCategoria)
+      .toList();
 
   List<Map<String, dynamic>> get _tiposDoProduto =>
       _listaDeMapas(_produtoSelecionado?['tipos']);
 
-  // Marcas já usadas com o produto aparecem primeiro, depois as demais.
-  List<String> get _opcoesMarca {
-    final doProduto = _listaDeMapas(_produtoSelecionado?['marcas'])
-        .map((m) => m['nm_marca'].toString())
-        .toList();
-    final demais = _marcas
-        .map((m) => m['nm_marca'].toString())
-        .where((nome) => !doProduto.contains(nome));
-    return [...doProduto, ...demais];
+  List<Map<String, dynamic>> get _marcasDoProduto =>
+      _listaDeMapas(_produtoSelecionado?['marcas']);
+
+  Map<String, dynamic>? get _produtoEmOutraCategoria {
+    if (_buscarPorNome(
+          _produtosDaCategoria,
+          'nm_produto',
+          _produtoController.text,
+        ) !=
+        null) {
+      return null;
+    }
+    return _buscarPorNome(_produtos, 'nm_produto', _produtoController.text);
   }
 
   bool get _produtoNovo =>
@@ -239,11 +275,22 @@ class _RegistroProdutoState extends State<RegistroProduto> {
       _buscarPorNome(_produtos, 'nm_produto', _produtoController.text) == null;
 
   String get _categoria {
-    if (_produtoSelecionado != null) {
-      return _produtoSelecionado!['nm_categoria'].toString();
+    final categoria = _categorias.where(
+      (c) => _toInt(c['id_categoria']) == _idCategoria,
+    );
+    return categoria.isEmpty
+        ? 'Categoria'
+        : categoria.first['nm_categoria'].toString();
+  }
+
+  String? get _ajudaProduto {
+    final outra = _produtoEmOutraCategoria;
+    if (outra != null) {
+      return 'Este produto pertence à categoria ${outra['nm_categoria']}.';
     }
-    if (_carregandoProduto) return 'Carregando...';
-    return _produtoNovo ? 'OUTRO' : 'Selecione o produto';
+    if (_produtoNovo) return 'Produto novo: será cadastrado em $_categoria.';
+    if (_carregandoProduto) return 'Carregando tipos e marcas...';
+    return null;
   }
 
   String get _siglaUnidade {
@@ -255,10 +302,7 @@ class _RegistroProdutoState extends State<RegistroProduto> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const AcheiBaratoAppBar(),
-      body: _buildBody(),
-    );
+    return Scaffold(appBar: const AcheiBaratoAppBar(), body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -287,6 +331,11 @@ class _RegistroProdutoState extends State<RegistroProduto> {
 
     final textoTipo = _tipoController.text.trim();
     final textoMarca = _marcaController.text.trim();
+    final temCategoria = _idCategoria != null;
+    final temProduto =
+        temCategoria &&
+        _produtoController.text.trim().isNotEmpty &&
+        _produtoEmOutraCategoria == null;
 
     return SingleChildScrollView(
       child: Padding(
@@ -308,16 +357,38 @@ class _RegistroProdutoState extends State<RegistroProduto> {
               style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 20),
+            DropdownButtonFormField<int>(
+              initialValue: _idCategoria,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Categoria',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.category),
+              ),
+              items: _categorias
+                  .map(
+                    (c) => DropdownMenuItem(
+                      value: _toInt(c['id_categoria']),
+                      child: Text(c['nm_categoria'].toString()),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _onCategoriaAlterada,
+            ),
+            const SizedBox(height: 16),
             _campoAutocomplete(
               controller: _produtoController,
               focusNode: _produtoFocus,
               label: 'Produto',
               icone: Icons.label,
-              opcoes: _produtos.map((p) => p['nm_produto'].toString()).toList(),
+              habilitado: temCategoria,
+              opcoes: _produtosDaCategoria
+                  .map((p) => p['nm_produto'].toString())
+                  .toList(),
               onChanged: _onProdutoAlterado,
-              textoAjuda: _produtoNovo
-                  ? 'Produto novo: será cadastrado na categoria OUTRO.'
-                  : null,
+              textoAjuda: temCategoria
+                  ? _ajudaProduto
+                  : 'Selecione a categoria primeiro.',
             ),
             const SizedBox(height: 16),
             _campoAutocomplete(
@@ -325,10 +396,15 @@ class _RegistroProdutoState extends State<RegistroProduto> {
               focusNode: _tipoFocus,
               label: 'Tipo',
               icone: Icons.style,
-              opcoes: _tiposDoProduto.map((t) => t['nm_tipo'].toString()).toList(),
+              habilitado: temProduto,
+              opcoes: _tiposDoProduto
+                  .map((t) => t['nm_tipo'].toString())
+                  .toList(),
               onChanged: (_) => setState(() {}),
-              textoAjuda: textoTipo.isNotEmpty &&
-                      _buscarPorNome(_tiposDoProduto, 'nm_tipo', textoTipo) == null
+              textoAjuda:
+                  textoTipo.isNotEmpty &&
+                      _buscarPorNome(_tiposDoProduto, 'nm_tipo', textoTipo) ==
+                          null
                   ? 'Tipo novo: será cadastrado para este produto.'
                   : null,
             ),
@@ -338,11 +414,20 @@ class _RegistroProdutoState extends State<RegistroProduto> {
               focusNode: _marcaFocus,
               label: 'Marca',
               icone: Icons.business_center,
-              opcoes: _opcoesMarca,
+              habilitado: temProduto,
+              opcoes: _marcasDoProduto
+                  .map((m) => m['nm_marca'].toString())
+                  .toList(),
               onChanged: (_) => setState(() {}),
-              textoAjuda: textoMarca.isNotEmpty &&
-                      _buscarPorNome(_marcas, 'nm_marca', textoMarca) == null
-                  ? 'Marca nova: será cadastrada.'
+              textoAjuda:
+                  textoMarca.isNotEmpty &&
+                      _buscarPorNome(
+                            _marcasDoProduto,
+                            'nm_marca',
+                            textoMarca,
+                          ) ==
+                          null
+                  ? 'Marca nova para este produto.'
                   : null,
             ),
             const SizedBox(height: 16),
@@ -354,8 +439,9 @@ class _RegistroProdutoState extends State<RegistroProduto> {
                   child: TextField(
                     controller: _medidaController,
                     onChanged: (_) => setState(() {}),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Conteúdo da embalagem',
                       hintText: 'Ex.: 5',
@@ -381,7 +467,9 @@ class _RegistroProdutoState extends State<RegistroProduto> {
                         .map(
                           (u) => DropdownMenuItem(
                             value: _toInt(u['id_unidade']),
-                            child: Text('${u['sg_unidade']} — ${u['nm_unidade']}'),
+                            child: Text(
+                              '${u['sg_unidade']} — ${u['nm_unidade']}',
+                            ),
                           ),
                         )
                         .toList(),
@@ -391,24 +479,12 @@ class _RegistroProdutoState extends State<RegistroProduto> {
               ],
             ),
             const SizedBox(height: 16),
-            InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Categoria',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
-                suffixIcon: Icon(Icons.lock_outline),
-                enabled: false,
-              ),
-              child: Text(
-                _categoria,
-                style: TextStyle(color: Colors.grey.shade700),
-              ),
-            ),
-            const SizedBox(height: 16),
             TextField(
               controller: _valorController,
               onChanged: (_) => setState(() {}),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Valor (R\$)',
                 border: OutlineInputBorder(),
@@ -530,7 +606,6 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     );
   }
 
-  // Campo de texto com sugestões: o mercadista escolhe da lista ou digita um valor novo.
   Widget _campoAutocomplete({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -539,6 +614,7 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     required List<String> opcoes,
     required ValueChanged<String> onChanged,
     String? textoAjuda,
+    bool habilitado = true,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) => RawAutocomplete<String>(
@@ -550,19 +626,21 @@ class _RegistroProdutoState extends State<RegistroProduto> {
           return opcoes.where((o) => _normalizar(o).contains(busca));
         },
         onSelected: onChanged,
-        fieldViewBuilder: (context, campoController, campoFocus, _) => TextField(
-          controller: campoController,
-          focusNode: campoFocus,
-          textCapitalization: TextCapitalization.characters,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            labelText: label,
-            helperText: textoAjuda,
-            helperStyle: TextStyle(color: Colors.orange.shade800),
-            border: const OutlineInputBorder(),
-            prefixIcon: Icon(icone),
-          ),
-        ),
+        fieldViewBuilder: (context, campoController, campoFocus, _) =>
+            TextField(
+              controller: campoController,
+              focusNode: campoFocus,
+              enabled: habilitado,
+              textCapitalization: TextCapitalization.characters,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                labelText: label,
+                helperText: textoAjuda,
+                helperStyle: TextStyle(color: Colors.orange.shade800),
+                border: const OutlineInputBorder(),
+                prefixIcon: Icon(icone),
+              ),
+            ),
         optionsViewBuilder: (context, onSelected, sugestoes) => Align(
           alignment: Alignment.topLeft,
           child: Material(
@@ -593,8 +671,6 @@ class _RegistroProdutoState extends State<RegistroProduto> {
     );
   }
 
-  // Compara nomes sem diferenciar maiúsculas, acentos e espaços extras,
-  // para "feijao" encontrar "FEIJÃO" em vez de criar um duplicado.
   Map<String, dynamic>? _buscarPorNome(
     List<Map<String, dynamic>> lista,
     String campo,
@@ -610,16 +686,36 @@ class _RegistroProdutoState extends State<RegistroProduto> {
   }
 
   static const Map<String, String> _semAcento = {
-    'Á': 'A', 'À': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A',
-    'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E',
-    'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I',
-    'Ó': 'O', 'Ò': 'O', 'Ô': 'O', 'Õ': 'O', 'Ö': 'O',
-    'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U',
+    'Á': 'A',
+    'À': 'A',
+    'Â': 'A',
+    'Ã': 'A',
+    'Ä': 'A',
+    'É': 'E',
+    'È': 'E',
+    'Ê': 'E',
+    'Ë': 'E',
+    'Í': 'I',
+    'Ì': 'I',
+    'Î': 'I',
+    'Ï': 'I',
+    'Ó': 'O',
+    'Ò': 'O',
+    'Ô': 'O',
+    'Õ': 'O',
+    'Ö': 'O',
+    'Ú': 'U',
+    'Ù': 'U',
+    'Û': 'U',
+    'Ü': 'U',
     'Ç': 'C',
   };
 
   String _normalizar(String texto) {
-    final maiusculo = texto.trim().toUpperCase().replaceAll(RegExp(r'\s+'), ' ');
+    final maiusculo = texto.trim().toUpperCase().replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    );
     return maiusculo.split('').map((c) => _semAcento[c] ?? c).join();
   }
 
