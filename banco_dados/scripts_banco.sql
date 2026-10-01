@@ -6,7 +6,7 @@ set search_path to achei_barato;
 
 -- Criação das Tabelas via SQL Power Architect
 
-CREATE TABLE Tb_Produtos (
+CREATE TABLE Tb_Produto (
                 id_produto INTEGER NOT NULL,
                 nm_produto VARCHAR(20) NOT NULL,
                 nm_marca VARCHAR(30) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE Tb_Produtos (
 );
 
 CREATE SEQUENCE IF NOT EXISTS sq_tb_produtos START 1;
-ALTER TABLE tb_produtos
+ALTER TABLE tb_produto
     ALTER COLUMN id_produto SET DEFAULT nextval('sq_tb_produtos');
 
 
@@ -138,9 +138,9 @@ CREATE TABLE Tb_Mercado_Favorito (
 CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado_favorito START 1;
 ALTER TABLE tb_mercado_favorito
     ALTER COLUMN id_mercado_fav SET DEFAULT nextval('sq_tb_mercado_favorito');
-
+	
 CREATE UNIQUE INDEX IF NOT EXISTS tb_mercado_favorito_uk
-  ON tb_mercado_favorito (id_usuario, id_mercado);
+	ON tb_mercado_favorito (id_usuario, id_mercado);
 
 CREATE TABLE Tb_Produto_Favorito (
                 id_prod_fav INTEGER NOT NULL,
@@ -199,7 +199,7 @@ REFERENCES achei_barato.Tb_Carrinho (id_carrinho);
 
 ALTER TABLE tb_mercado ADD CONSTRAINT tb_mercado_email_uk UNIQUE (ds_email);
 
-/*  
+/* 
 Horario de funcionamento por dia da semana 
 nu_dia_semana: 0 = domingo ... 6 = sabado (mesma convencao do date('w') do PHP).
 Um mercado pode ter mais de uma faixa no mesmo dia (ex.: pausa para almoco).
@@ -226,10 +226,10 @@ REFERENCES tb_mercado (id_mercado);
 
 CREATE INDEX IF NOT EXISTS tb_horario_mercado_idx ON tb_horario_mercado (id_mercado, nu_dia_semana);
 
-/* Alteração visando o erro de valor de promoção sobre valor de promoção*/
+/* Alteração visando o erro de promoção sobre valor de promoção */
 
 ALTER TABLE tb_produto_mercado
-  ADD COLUMN IF NOT EXISTS nu_desconto INTEGER NOT NULL DEFAULT 0;
+ADD COLUMN IF NOT EXISTS nu_desconto INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE tb_produto_mercado
-  ADD CONSTRAINT ck_produto_mercado_desconto CHECK (nu_desconto BETWEEN 0 AND 100);
+ADD CONSTRAINT ck_produto_mercado_desconto CHECK (nu_desconto BETWEEN 0 AND 100);
