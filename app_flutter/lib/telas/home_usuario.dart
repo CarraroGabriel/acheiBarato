@@ -3,6 +3,7 @@ import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/login.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/bottomnav.dart';
 
 class HomeUsuario extends StatefulWidget {
   final int idUsuario;
@@ -19,7 +20,6 @@ class HomeUsuario extends StatefulWidget {
 }
 
 class _HomeUsuarioState extends State<HomeUsuario> {
-  int _abaSelecionada = 0;
   bool _carregando = true;
   String? _erro;
   List<Map<String, dynamic>> _mercados = [];
@@ -288,30 +288,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _abaSelecionada,
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        onTap: (i) => setState(() => _abaSelecionada = i),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Início',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outline),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Favoritos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            activeIcon: Icon(Icons.shopping_cart),
-            label: 'Pedidos',
-          ),
-        ],
+      bottomNavigationBar: BottomNav(
+        indiceAtual: 0,
+        idUsuario: widget.idUsuario,
+        nomeUsuario: widget.nomeUsuario,
       ),
     );
   }

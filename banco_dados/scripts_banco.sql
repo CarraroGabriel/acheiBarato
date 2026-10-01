@@ -15,6 +15,10 @@ CREATE TABLE Tb_Produtos (
                 CONSTRAINT pk_produtos PRIMARY KEY (id_produto)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_produtos START 1;
+ALTER TABLE tb_produtos
+    ALTER COLUMN id_produto SET DEFAULT nextval('sq_tb_produtos');
+
 
 CREATE TABLE Tb_Mercado (
                 id_mercado INTEGER NOT NULL,
@@ -33,6 +37,9 @@ CREATE TABLE Tb_Mercado (
                 CONSTRAINT pk_mercado PRIMARY KEY (id_mercado)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado START 1;
+ALTER TABLE tb_mercado
+    ALTER COLUMN id_mercado SET DEFAULT nextval('sq_tb_mercado');
 
 CREATE UNIQUE INDEX tb_mercado_idx
  ON Tb_Mercado
@@ -50,6 +57,12 @@ CREATE TABLE Tb_Produto_Mercado (
                 CONSTRAINT pk_produto_mercado PRIMARY KEY (id_produto_mercado, id_produto, id_mercado)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_produto_mercado START 1;
+ALTER TABLE tb_produto_mercado
+    ALTER COLUMN id_produto_mercado SET DEFAULT nextval('sq_tb_produto_mercado');
+
+ALTER TABLE tb_produto_mercado
+    ALTER COLUMN dt_atualizacao SET DEFAULT CURRENT_DATE;
 
 CREATE TABLE Tb_Usuario (
                 id_usuario INTEGER NOT NULL,
@@ -61,13 +74,17 @@ CREATE TABLE Tb_Usuario (
                 CONSTRAINT pk_usuario PRIMARY KEY (id_usuario)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_usuario START 1;
+ALTER TABLE tb_usuario
+    ALTER COLUMN id_usuario SET DEFAULT nextval('sq_tb_usuario');
+
 
 CREATE UNIQUE INDEX tb_usuario_idx
  ON Tb_Usuario
  ( nu_cpf );
 
  /* O login do usuário é feito por e-mail. Para evitar duas contas com o mesmo
-    identificador de login, criamos índices únicos de e-mail.*/
+    identificador de login, foi criado índices únicos de e-mail.*/
 CREATE UNIQUE INDEX IF NOT EXISTS tb_usuario_email_idx 
 ON tb_usuario 
 (LOWER(ds_email));
@@ -78,6 +95,10 @@ CREATE TABLE Tb_Carrinho (
                 id_usuario INTEGER NOT NULL,
                 CONSTRAINT pk_carrinho PRIMARY KEY (id_carrinho)
 );
+
+CREATE SEQUENCE IF NOT EXISTS sq_tb_carrinho START 1;
+ALTER TABLE tb_carrinho
+    ALTER COLUMN id_carrinho SET DEFAULT nextval('sq_tb_carrinho');
 
 
 CREATE TABLE Tb_Item_Carrinho (
@@ -90,6 +111,9 @@ CREATE TABLE Tb_Item_Carrinho (
                 CONSTRAINT tb_item_carrinho_pk PRIMARY KEY (id_item_carrinho, id_carrinho, id_produto)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_item_carrinho START 1;
+ALTER TABLE tb_item_carrinho
+    ALTER COLUMN id_item_carrinho SET DEFAULT nextval('sq_tb_item_carrinho');
 
 CREATE TABLE Tb_Avaliacao_Mercado (
                 id_avaliacao INTEGER NOT NULL,
@@ -100,6 +124,9 @@ CREATE TABLE Tb_Avaliacao_Mercado (
                 CONSTRAINT pk_avaliacao_mercado PRIMARY KEY (id_avaliacao, id_usuario, id_mercado)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_avaliacao_mercado START 1;
+ALTER TABLE tb_avaliacao_mercado
+    ALTER COLUMN id_avaliacao SET DEFAULT nextval('sq_tb_avaliacao_mercado');
 
 CREATE TABLE Tb_Mercado_Favorito (
                 id_mercado_fav INTEGER NOT NULL,
@@ -108,6 +135,9 @@ CREATE TABLE Tb_Mercado_Favorito (
                 CONSTRAINT pk_mercado_fav PRIMARY KEY (id_mercado_fav, id_mercado, id_usuario)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado_favorito START 1;
+ALTER TABLE tb_mercado_favorito
+    ALTER COLUMN id_mercado_fav SET DEFAULT nextval('sq_tb_mercado_favorito');
 
 CREATE TABLE Tb_Produto_Favorito (
                 id_prod_fav INTEGER NOT NULL,
@@ -116,6 +146,9 @@ CREATE TABLE Tb_Produto_Favorito (
                 CONSTRAINT pk_produto_favorito PRIMARY KEY (id_prod_fav, id_usuario, id_produto)
 );
 
+CREATE SEQUENCE IF NOT EXISTS sq_tb_produto_fav START 1;
+ALTER TABLE tb_produto_favorito
+    ALTER COLUMN id_prod_fav SET DEFAULT nextval('sq_tb_produto_fav');
 
 ALTER TABLE Tb_Produto_Mercado ADD CONSTRAINT tb_produtos_tb_produto_mercado_fk
 FOREIGN KEY (id_produto)
@@ -163,58 +196,29 @@ REFERENCES achei_barato.Tb_Carrinho (id_carrinho);
 
 ALTER TABLE tb_mercado ADD CONSTRAINT tb_mercado_email_uk UNIQUE (ds_email);
 
--- ============================================================
--- CORRECAO: as tabelas foram criadas sem sequence/auto-incremento,
--- entao todo INSERT falhava com:
---   "null value in column id_xxx violates not-null constraint"
--- Este script adiciona sequences + defaults em todas as tabelas.
--- ============================================================
+/* ============================================================ 
+Horario de funcionamento por dia da semana 
+nu_dia_semana: 0 = domingo ... 6 = sabado (mesma convencao do date('w') do PHP).
+Um mercado pode ter mais de uma faixa no mesmo dia (ex.: pausa para almoco).
+Limitacao: hr_fechamento > hr_abertura (nao cobre horario que vira a meia-noite). 
+============================================================ */
 
--- tb_usuario --------------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_usuario START 1;
-ALTER TABLE tb_usuario
-    ALTER COLUMN id_usuario SET DEFAULT nextval('sq_tb_usuario');
 
--- tb_mercado --------------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado START 1;
-ALTER TABLE tb_mercado
-    ALTER COLUMN id_mercado SET DEFAULT nextval('sq_tb_mercado');
+CREATE SEQUENCE IF NOT EXISTS sq_tb_horario_mercado START 1;
 
--- tb_produtos -------------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_produtos START 1;
-ALTER TABLE tb_produtos
-    ALTER COLUMN id_produto SET DEFAULT nextval('sq_tb_produtos');
+CREATE TABLE IF NOT EXISTS tb_horario_mercado (
+    id_horario     INTEGER  NOT NULL DEFAULT nextval('sq_tb_horario_mercado'),
+    id_mercado     INTEGER  NOT NULL,
+    nu_dia_semana  SMALLINT NOT NULL,
+    hr_abertura    TIME     NOT NULL,
+    hr_fechamento  TIME     NOT NULL,
+    CONSTRAINT pk_horario_mercado PRIMARY KEY (id_horario),
+    CONSTRAINT ck_horario_dia CHECK (nu_dia_semana BETWEEN 0 AND 6),
+    CONSTRAINT ck_horario_faixa CHECK (hr_fechamento > hr_abertura) 
+);
 
--- tb_produto_mercado ------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_produto_mercado START 1;
-ALTER TABLE tb_produto_mercado
-    ALTER COLUMN id_produto_mercado SET DEFAULT nextval('sq_tb_produto_mercado');
+ALTER TABLE tb_horario_mercado ADD CONSTRAINT tb_horario_mercado_tb_mercado_fk
+FOREIGN KEY (id_mercado)
+REFERENCES tb_mercado (id_mercado);
 
--- tb_carrinho -------------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_carrinho START 1;
-ALTER TABLE tb_carrinho
-    ALTER COLUMN id_carrinho SET DEFAULT nextval('sq_tb_carrinho');
-
--- tb_item_carrinho --------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_item_carrinho START 1;
-ALTER TABLE tb_item_carrinho
-    ALTER COLUMN id_item_carrinho SET DEFAULT nextval('sq_tb_item_carrinho');
-
--- tb_avaliacao_mercado ----------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_avaliacao_mercado START 1;
-ALTER TABLE tb_avaliacao_mercado
-    ALTER COLUMN id_avaliacao SET DEFAULT nextval('sq_tb_avaliacao_mercado');
-
--- tb_mercado_favorito -----------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado_favorito START 1;
-ALTER TABLE tb_mercado_favorito
-    ALTER COLUMN id_mercado_fav SET DEFAULT nextval('sq_tb_mercado_favorito');
-
--- tb_produto_favorito -----------------------------------------
-CREATE SEQUENCE IF NOT EXISTS sq_tb_produto_fav START 1;
-ALTER TABLE tb_produto_favorito
-    ALTER COLUMN id_prod_fav SET DEFAULT nextval('sq_tb_produto_fav');
-
--- tb_produto_mercado: dt_atualizacao tambem nao tinha default --
-ALTER TABLE tb_produto_mercado
-    ALTER COLUMN dt_atualizacao SET DEFAULT CURRENT_DATE;
+CREATE INDEX IF NOT EXISTS tb_horario_mercado_idx ON tb_horario_mercado (id_mercado, nu_dia_semana);
