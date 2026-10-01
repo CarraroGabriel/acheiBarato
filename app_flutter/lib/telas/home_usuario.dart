@@ -457,7 +457,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
           const SizedBox(height: 6),
           Text(
-            (produto['nm_produto'] ?? '').toString(),
+            (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '').toString(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),

@@ -345,7 +345,7 @@ class _FavoritosState extends State<Favoritos> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            (produto['nm_produto'] ?? '').toString(),
+            (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '').toString(),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),

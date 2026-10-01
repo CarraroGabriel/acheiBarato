@@ -19,6 +19,7 @@ require_once __DIR__ . '/../routes/login_routes.php';
 require_once __DIR__ . '/../routes/promocao_routes.php';
 require_once __DIR__ . '/../routes/mercado_favorito_routes.php';
 require_once __DIR__ . '/../routes/favorito_routes.php';
+require_once __DIR__ . '/../routes/catalogo_routes.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -40,6 +41,9 @@ $rotasPrincipais = [
     'promocoes',
     'mercado_favorito',
     'favoritos',
+    'categorias',
+    'marcas',
+    'unidades',
 ];
 
 $rotaPrincipal = null;
@@ -85,6 +89,11 @@ switch ($rotaPrincipal) {
         break;
     case 'favoritos':
         tratarRotaFavorito($metodo, $rotaTratada);
+        break;
+    case 'categorias':
+    case 'marcas':
+    case 'unidades':
+        tratarRotaCatalogo($metodo, $rotaPrincipal);
         break;
     default:
         Response::json(false, 'Rota não encontrada.', null, 404);

@@ -67,21 +67,18 @@ class Favorito
 
     public function listarProdutos(int $idUsuario): array
     {
-        $sql = 'SELECT p.id_produto, p.nm_produto, p.nm_marca, p.ds_categoria, p.ds_foto_produto,
+        $sql = 'SELECT ip.id_item_produto, ip.id_produto, ip.nm_produto, ip.nm_marca,
+                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_item_produto,
                        pm.id_produto_mercado, pm.nu_valor, pm.nu_qtde,
                        pm.fl_promocao, pm.fl_disponivel, pm.dt_atualizacao, pm.nu_desconto,
                        ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final,
                        m.id_mercado, m.nm_mercado, m.nu_latitude, m.nu_longitude, m.fl_motoboy
-                FROM tb_produto p
-                LEFT JOIN tb_produto_mercado pm ON pm.id_produto = p.id_produto
+                FROM tb_produto_favorito pf
+                INNER JOIN vw_item_produto ip ON ip.id_item_produto = pf.id_item_produto
+                LEFT JOIN tb_produto_mercado pm ON pm.id_item_produto = ip.id_item_produto
                 LEFT JOIN tb_mercado m ON m.id_mercado = pm.id_mercado
-                WHERE EXISTS (
-                    SELECT 1
-                      FROM tb_produto_favorito pf
-                     WHERE pf.id_produto = p.id_produto
-                       AND pf.id_usuario = :id_usuario
-                )
-                ORDER BY p.nm_produto, p.id_produto, pm.nu_valor, m.nm_mercado';
+                WHERE pf.id_usuario = :id_usuario
+                ORDER BY ip.ds_item_produto, ip.nm_marca, ip.id_item_produto, pm.nu_valor, m.nm_mercado';
 
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
@@ -90,12 +87,14 @@ class Favorito
         $produtos = [];
 
         foreach ($stmt->fetchAll() as $linha) {
-            $idProduto = (int) $linha['id_produto'];
+            $idItem = (int) $linha['id_item_produto'];
 
-            if (!isset($produtos[$idProduto])) {
-                $produtos[$idProduto] = [
-                    'id_produto'      => $idProduto,
+            if (!isset($produtos[$idItem])) {
+                $produtos[$idItem] = [
+                    'id_item_produto' => $idItem,
+                    'id_produto'      => (int) $linha['id_produto'],
                     'nm_produto'      => $linha['nm_produto'],
+                    'ds_item_produto' => $linha['ds_item_produto'],
                     'nm_marca'        => $linha['nm_marca'],
                     'ds_categoria'    => $linha['ds_categoria'],
                     'ds_foto_produto' => $linha['ds_foto_produto'],
@@ -108,7 +107,7 @@ class Favorito
                 continue;
             }
 
-            $produtos[$idProduto]['mercados'][] = [
+            $produtos[$idItem]['mercados'][] = [
                 'id_produto_mercado' => (int) $linha['id_produto_mercado'],
                 'id_mercado'         => (int) $linha['id_mercado'],
                 'nm_mercado'         => $linha['nm_mercado'],

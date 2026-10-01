@@ -210,7 +210,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                       border: Border.all(color: Colors.white, width: 4),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -416,7 +416,8 @@ class _PerfilMercadoState extends State<PerfilMercado> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  (produto['nm_produto'] ?? '').toString(),
+                  (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '')
+                      .toString(),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -450,7 +451,9 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   ),
                 ),
               Text(
-                _formatarValor(produto['nu_valor_final'] ?? produto['nu_valor']),
+                _formatarValor(
+                  produto['nu_valor_final'] ?? produto['nu_valor'],
+                ),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

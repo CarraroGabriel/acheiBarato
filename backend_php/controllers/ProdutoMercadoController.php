@@ -142,21 +142,35 @@ class ProdutoMercadoController
 
     private function normalizarEValidar(array $dados): array
     {
-        foreach (['id_mercado', 'nm_produto', 'nm_marca', 'ds_categoria', 'nu_valor', 'nu_qtde'] as $campo) {
+        foreach (['id_mercado', 'nu_medida', 'id_unidade', 'nu_valor', 'nu_qtde'] as $campo) {
             if (!isset($dados[$campo]) || trim((string) $dados[$campo]) === '') {
                 throw new InvalidArgumentException("O campo {$campo} é obrigatório.");
             }
         }
 
+        // Produto, tipo e marca chegam por id (existente) ou por nome (novo).
+        [$dados['id_produto'], $dados['nm_produto']] = $this->lerReferencia($dados, 'produto', 50);
+        [$dados['id_tipo'], $dados['nm_tipo']] = $this->lerReferencia($dados, 'tipo', 30);
+        [$dados['id_marca'], $dados['nm_marca']] = $this->lerReferencia($dados, 'marca', 40);
+
         $dados['id_mercado'] = (int) $dados['id_mercado'];
+        $dados['id_unidade'] = (int) $dados['id_unidade'];
+        $dados['nu_medida'] = $this->normalizarNumeroDecimal($dados['nu_medida']);
         $dados['nu_valor'] = $this->normalizarNumeroDecimal($dados['nu_valor']);
         $dados['nu_qtde'] = (int) $dados['nu_qtde'];
         $dados['fl_promocao'] = (bool) ($dados['fl_promocao'] ?? false);
         $dados['fl_disponivel'] = (bool) ($dados['fl_disponivel'] ?? true);
-        $dados['ds_foto_produto'] = (string) ($dados['ds_foto_produto'] ?? '');
 
         if ($dados['id_mercado'] <= 0) {
             throw new InvalidArgumentException('id_mercado inválido.');
+        }
+
+        if ($dados['id_unidade'] <= 0) {
+            throw new InvalidArgumentException('Selecione a unidade de medida.');
+        }
+
+        if ($dados['nu_medida'] <= 0 || $dados['nu_medida'] >= 10000000) {
+            throw new InvalidArgumentException('Conteúdo da embalagem inválido.');
         }
 
         if ($dados['nu_valor'] < 0 || $dados['nu_qtde'] < 0) {
@@ -164,6 +178,30 @@ class ProdutoMercadoController
         }
 
         return $dados;
+    }
+
+    /**
+     * Lê id_<campo> ou nm_<campo>. Retorna [id, null] ou [null, nome normalizado].
+     */
+    private function lerReferencia(array $dados, string $campo, int $tamanhoMaximo): array
+    {
+        $id = (int) ($dados["id_{$campo}"] ?? 0);
+
+        if ($id > 0) {
+            return [$id, null];
+        }
+
+        $nome = preg_replace('/\s+/u', ' ', trim((string) ($dados["nm_{$campo}"] ?? '')));
+
+        if ($nome === '') {
+            throw new InvalidArgumentException("Informe o {$campo}.");
+        }
+
+        if (!preg_match('/^.{1,' . $tamanhoMaximo . '}$/u', $nome)) {
+            throw new InvalidArgumentException("O {$campo} deve ter no máximo {$tamanhoMaximo} caracteres.");
+        }
+
+        return [null, $nome];
     }
 
     private function normalizarNumeroDecimal(mixed $valor): float

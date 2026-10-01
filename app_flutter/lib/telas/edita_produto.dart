@@ -199,7 +199,7 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
             ),
             const SizedBox(height: 6),
             Text(
-              '${produto['nm_produto'] ?? ''} • ${produto['nm_marca'] ?? ''}',
+              '${produto['ds_item_produto'] ?? produto['nm_produto'] ?? ''} • ${produto['nm_marca'] ?? ''}',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
