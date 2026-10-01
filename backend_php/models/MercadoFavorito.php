@@ -1,27 +1,48 @@
 <?php
 
+require_once __DIR__ . '/../config/Database.php';
+
 class MercadoFavorito
 {
-    public ?int $id_mercado_fav;
-    public int $id_mercado;
-    public int $id_usuario;
+    private PDO $conexao;
 
-    public function __construct(
-        ?int $id_mercado_fav,
-        int $id_mercado,
-        int $id_usuario
-    ) {
-        $this->id_mercado_fav = $id_mercado_fav;
-        $this->id_mercado     = $id_mercado;
-        $this->id_usuario     = $id_usuario;
+    public function __construct()
+    {
+        $this->conexao = (new Database())->conectar();
     }
 
-    public static function fromArray(array $dados): MercadoFavorito
+    public function existe(int $idUsuario, int $idMercado): bool
     {
-        return new MercadoFavorito(
-            isset($dados["id_mercado_fav"]) ? (int) $dados["id_mercado_fav"] : null,
-            (int) ($dados["id_mercado"] ?? 0),
-            (int) ($dados["id_usuario"] ?? 0)
+        $stmt = $this->conexao->prepare(
+            'SELECT 1 FROM tb_mercado_favorito
+             WHERE id_usuario = :u AND id_mercado = :m'
         );
+        $stmt->bindValue(':u', $idUsuario, PDO::PARAM_INT);
+        $stmt->bindValue(':m', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+        return (bool) $stmt->fetch();
+    }
+
+    public function adicionar(int $idUsuario, int $idMercado): void
+    {
+        $stmt = $this->conexao->prepare(
+            'INSERT INTO tb_mercado_favorito (id_usuario, id_mercado)
+             VALUES (:u, :m)
+             ON CONFLICT (id_usuario, id_mercado) DO NOTHING'
+        );
+        $stmt->bindValue(':u', $idUsuario, PDO::PARAM_INT);
+        $stmt->bindValue(':m', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function remover(int $idUsuario, int $idMercado): void
+    {
+        $stmt = $this->conexao->prepare(
+            'DELETE FROM tb_mercado_favorito
+             WHERE id_usuario = :u AND id_mercado = :m'
+        );
+        $stmt->bindValue(':u', $idUsuario, PDO::PARAM_INT);
+        $stmt->bindValue(':m', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
     }
 }

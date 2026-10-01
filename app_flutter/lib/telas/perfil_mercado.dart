@@ -7,11 +7,13 @@ import 'package:achei_barato/widgets/app_bar.dart';
 
 class PerfilMercado extends StatefulWidget {
   final int idMercado;
+  final int? idUsuario;
   final bool modoLojista;
 
   const PerfilMercado({
     super.key,
     required this.idMercado,
+    this.idUsuario,
     this.modoLojista = false,
   });
 
@@ -24,11 +26,15 @@ class _PerfilMercadoState extends State<PerfilMercado> {
   String? _erro;
   Map<String, dynamic>? _mercado;
   List<Map<String, dynamic>> _produtos = [];
+  bool _favorito = false;
+  bool _alternandoFavorito = false;
+  bool get _podeFavoritar => !widget.modoLojista && widget.idUsuario != null;
 
   @override
   void initState() {
     super.initState();
     _carregarDados();
+    _carregarFavorito();
   }
 
   Future<void> _carregarDados() async {
@@ -62,6 +68,45 @@ class _PerfilMercadoState extends State<PerfilMercado> {
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
+  }
+
+  Future<void> _carregarFavorito() async {
+    if (!_podeFavoritar) return;
+    try {
+      final r = await ApiService.get(
+        'mercado_favorito?id_usuario=${widget.idUsuario}&id_mercado=${widget.idMercado}',
+      );
+      if (mounted) setState(() => _favorito = r['dados']['favorito'] == true);
+    } catch (_) {}
+  }
+
+  Future<void> _alternarFavorito() async {
+    if (_alternandoFavorito) return;
+    setState(() => _alternandoFavorito = true);
+    try {
+      if (_favorito) {
+        await ApiService.delete(
+          'mercado_favorito?id_usuario=${widget.idUsuario}&id_mercado=${widget.idMercado}',
+        );
+      } else {
+        await ApiService.post('mercado_favorito', {
+          'id_usuario': widget.idUsuario,
+          'id_mercado': widget.idMercado,
+        });
+      }
+      if (mounted) setState(() => _favorito = !_favorito);
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível conectar ao servidor.');
+    } finally {
+      if (mounted) setState(() => _alternandoFavorito = false);
+    }
+  }
+
+  void _mostrarMensagem(String m) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
   }
 
   List<Map<String, dynamic>> _listaDeMapas(dynamic dados) {
@@ -102,7 +147,8 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                 final alterou = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => RegistroProduto(idMercado: widget.idMercado),
+                    builder: (_) =>
+                        RegistroProduto(idMercado: widget.idMercado),
                   ),
                 );
 
@@ -173,9 +219,15 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                     child: CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.grey.shade200,
-                      backgroundImage: foto.isNotEmpty ? NetworkImage(foto) : null,
+                      backgroundImage: foto.isNotEmpty
+                          ? NetworkImage(foto)
+                          : null,
                       child: foto.isEmpty
-                          ? const Icon(Icons.store, size: 50, color: Colors.grey)
+                          ? const Icon(
+                              Icons.store,
+                              size: 50,
+                              color: Colors.grey,
+                            )
                           : null,
                     ),
                   ),
@@ -185,10 +237,28 @@ class _PerfilMercadoState extends State<PerfilMercado> {
             const SizedBox(height: 60),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                (mercado['nm_mercado'] ?? 'Mercado').toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      (mercado['nm_mercado'] ?? 'Mercado').toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (_podeFavoritar)
+                    IconButton(
+                      onPressed: _alternarFavorito,
+                      icon: Icon(
+                        _favorito ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -258,7 +328,9 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   Row(
                     children: [
                       Icon(
-                        widget.modoLojista ? Icons.inventory_2 : Icons.local_offer,
+                        widget.modoLojista
+                            ? Icons.inventory_2
+                            : Icons.local_offer,
                         color: Colors.red,
                         size: 20,
                       ),
@@ -345,7 +417,10 @@ class _PerfilMercadoState extends State<PerfilMercado> {
               children: [
                 Text(
                   (produto['nm_produto'] ?? '').toString(),
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(

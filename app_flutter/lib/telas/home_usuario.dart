@@ -314,14 +314,17 @@ class _HomeUsuarioState extends State<HomeUsuario> {
 
   Widget _buildCardMercado(Map<String, dynamic> mercado) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                PerfilMercado(idMercado: _toInt(mercado['id_mercado'])),
+            builder: (_) => PerfilMercado(
+              idMercado: _toInt(mercado['id_mercado']),
+              idUsuario: widget.idUsuario,
+            ),
           ),
         );
+        _carregarDados();
       },
       child: Container(
         width: 160,
@@ -371,9 +374,13 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                 const SizedBox(width: 8),
                 Icon(Icons.location_on, color: Colors.grey.shade400, size: 13),
                 const SizedBox(width: 2),
-                Text(
-                  'distância pendente',
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                Expanded(
+                  child: Text(
+                    'distância pendente',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                  ),
                 ),
               ],
             ),

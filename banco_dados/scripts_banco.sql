@@ -139,6 +139,9 @@ CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado_favorito START 1;
 ALTER TABLE tb_mercado_favorito
     ALTER COLUMN id_mercado_fav SET DEFAULT nextval('sq_tb_mercado_favorito');
 
+CREATE UNIQUE INDEX IF NOT EXISTS tb_mercado_favorito_uk
+  ON tb_mercado_favorito (id_usuario, id_mercado);
+
 CREATE TABLE Tb_Produto_Favorito (
                 id_prod_fav INTEGER NOT NULL,
                 id_usuario INTEGER NOT NULL,
