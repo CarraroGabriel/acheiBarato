@@ -187,33 +187,6 @@ ON tb_usuario
 (LOWER(ds_email));
 
 
-CREATE TABLE Tb_Carrinho (
-                id_carrinho INTEGER NOT NULL,
-                fl_ativo BOOLEAN NOT NULL,
-                id_usuario INTEGER NOT NULL,
-                CONSTRAINT pk_carrinho PRIMARY KEY (id_carrinho)
-);
-
-CREATE SEQUENCE IF NOT EXISTS sq_tb_carrinho START 1;
-ALTER TABLE tb_carrinho
-    ALTER COLUMN id_carrinho SET DEFAULT nextval('sq_tb_carrinho');
-
-
-CREATE TABLE Tb_Item_Carrinho (
-                id_item_carrinho INTEGER NOT NULL,
-                id_carrinho INTEGER NOT NULL,
-                id_produto INTEGER NOT NULL,
-                vl_total NUMERIC(10,2) NOT NULL,
-                nu_qtde INTEGER NOT NULL,
-                dt_compra DATE NOT NULL,
-                CONSTRAINT tb_item_carrinho_pk PRIMARY KEY (id_item_carrinho, id_carrinho, id_produto)
-);
-
-CREATE SEQUENCE IF NOT EXISTS sq_tb_item_carrinho START 1;
-ALTER TABLE tb_item_carrinho
-    ALTER COLUMN id_item_carrinho SET DEFAULT nextval('sq_tb_item_carrinho');
-
-
 CREATE TABLE Tb_Avaliacao_Mercado (
                 id_avaliacao INTEGER NOT NULL,
                 id_usuario INTEGER NOT NULL,
@@ -347,14 +320,6 @@ REFERENCES Tb_Usuario (id_usuario);
 ALTER TABLE Tb_Avaliacao_Mercado ADD CONSTRAINT tb_usuario_tb_avaliacao_mercado_fk
 FOREIGN KEY (id_usuario)
 REFERENCES Tb_Usuario (id_usuario);
-
-ALTER TABLE Tb_Carrinho ADD CONSTRAINT tb_usuario_tb_carrinho_fk
-FOREIGN KEY (id_usuario)
-REFERENCES Tb_Usuario (id_usuario);
-
-ALTER TABLE Tb_Item_Carrinho ADD CONSTRAINT tb_carrinho_tb_item_carrinho_fk
-FOREIGN KEY (id_carrinho)
-REFERENCES Tb_Carrinho (id_carrinho);
 
 
 /* View com a descrição completa do item, usada pelas consultas da API.

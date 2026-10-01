@@ -30,6 +30,13 @@ class BottomNav extends StatelessWidget {
           Favoritos(idUsuario: idUsuario, nomeUsuario: nomeUsuario),
         );
         break;
+      case 3:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pedidos será uma funcionalidade futura do Achei Barato.'),
+          ),
+        );
+        break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tela ainda não implementada.')),
