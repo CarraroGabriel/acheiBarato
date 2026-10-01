@@ -14,6 +14,15 @@ function tratarRotasMercado(string $metodo, array $rota): void
         return;
     }
 
+    if ($idMercado !== null && $subrota === 'avaliacao') {
+        match ($metodo) {
+            'GET' => $controller->consultarAvaliacao($idMercado),
+            'POST' => $controller->avaliar($idMercado),
+            default => Response::json(false, 'Método não permitido.', null, 405),
+        };
+        return;
+    }
+
     switch ($metodo) {
         case 'GET':
             $idMercado === null ? $controller->listar() : $controller->consultar($idMercado);
@@ -25,7 +34,12 @@ function tratarRotasMercado(string $metodo, array $rota): void
             if ($idMercado === null) {
                 Response::json(false, 'Informe o id_mercado na URL.', null, 400);
             }
-            $controller->alterar($idMercado);
+
+            if ($subrota === 'perfil') {
+                $controller->alterarPerfil($idMercado);
+            } else {
+                $controller->alterar($idMercado);
+            }
             break;
         case 'DELETE':
             if ($idMercado === null) {

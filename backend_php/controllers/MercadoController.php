@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../models/Mercado.php';
 require_once __DIR__ . '/../models/ProdutoMercado.php';
+require_once __DIR__ . '/../models/AvaliacaoMercado.php';
 require_once __DIR__ . '/../helpers/Response.php';
 
 class MercadoController
@@ -93,6 +94,100 @@ class MercadoController
         }
     }
 
+    public function alterarPerfil(int $idMercado): void
+    {
+        $dados = $this->lerJson();
+
+        try {
+            $perfil = [
+                'nm_mercado' => trim((string) ($dados['nm_mercado'] ?? '')),
+                'ds_email' => trim((string) ($dados['ds_email'] ?? '')),
+                'nu_cep' => preg_replace('/\D/', '', (string) ($dados['nu_cep'] ?? '')),
+                'nm_endereco' => trim((string) ($dados['nm_endereco'] ?? '')),
+                'fl_motoboy' => (bool) ($dados['fl_motoboy'] ?? false),
+                'horarios' => $this->lerHorarios($dados),
+            ];
+
+            if (!preg_match('/^.{1,30}$/u', $perfil['nm_mercado'])) {
+                throw new InvalidArgumentException('Informe um nome com até 30 caracteres.');
+            }
+
+            if (!filter_var($perfil['ds_email'], FILTER_VALIDATE_EMAIL) || strlen($perfil['ds_email']) > 50) {
+                throw new InvalidArgumentException('Informe um e-mail válido.');
+            }
+
+            if (strlen($perfil['nu_cep']) !== 8) {
+                throw new InvalidArgumentException('O CEP deve possuir 8 dígitos.');
+            }
+            $perfil['nu_cep'] = (int) $perfil['nu_cep'];
+
+            if (!preg_match('/^.{1,50}$/u', $perfil['nm_endereco'])) {
+                throw new InvalidArgumentException('Informe um endereço com até 50 caracteres.');
+            }
+
+            $resultado = $this->mercado->alterarPerfil($idMercado, $perfil);
+
+            if ($resultado === null) {
+                Response::json(false, 'Mercado não encontrado.', null, 404);
+            }
+
+            Response::json(true, 'Perfil atualizado com sucesso.', $resultado, 200);
+        } catch (InvalidArgumentException $e) {
+            Response::json(false, $e->getMessage(), null, 400);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                Response::json(false, 'Este e-mail já está em uso.', null, 409);
+            }
+            Response::json(false, 'Erro ao atualizar perfil.', null, 500);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao atualizar perfil.', null, 500);
+        }
+    }
+
+    public function consultarAvaliacao(int $idMercado): void
+    {
+        $idUsuario = (int) ($_GET['id_usuario'] ?? 0);
+
+        if ($idUsuario <= 0) {
+            Response::json(false, 'Informe o id_usuario.', null, 400);
+        }
+
+        try {
+            $nota = (new AvaliacaoMercado())->consultarNota($idUsuario, $idMercado);
+            Response::json(true, 'Avaliação consultada.', ['nu_nota' => $nota], 200);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao consultar avaliação.', null, 500);
+        }
+    }
+
+    public function avaliar(int $idMercado): void
+    {
+        $dados = $this->lerJson();
+        $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+        $nota = filter_var($dados['nu_nota'] ?? null, FILTER_VALIDATE_INT);
+
+        if ($idUsuario <= 0) {
+            Response::json(false, 'Informe o id_usuario.', null, 400);
+        }
+
+        if ($nota === false || $nota < 1 || $nota > 5) {
+            Response::json(false, 'A nota deve ser de 1 a 5 estrelas.', null, 400);
+        }
+
+        try {
+            $resultado = (new AvaliacaoMercado())->avaliar($idUsuario, $idMercado, $nota);
+            Response::json(true, 'Avaliação registrada. Obrigado!', $resultado, 200);
+        } catch (PDOException $e) {
+            // 23503 = FK: usuário ou mercado inexistente.
+            if ($e->getCode() === '23503') {
+                Response::json(false, 'Usuário ou mercado não encontrado.', null, 404);
+            }
+            Response::json(false, 'Erro ao registrar avaliação.', null, 500);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao registrar avaliação.', null, 500);
+        }
+    }
+
     public function excluir(int $idMercado): void
     {
         try {
@@ -104,6 +199,71 @@ class MercadoController
         } catch (Throwable $e) {
             Response::json(false, 'Erro ao remover mercado.', null, 500);
         }
+    }
+
+    /**
+     * Valida a lista de horários enviada no perfil.
+     * Retorna null se o campo não foi enviado (horários atuais são mantidos).
+     */
+    private function lerHorarios(array $dados): ?array
+    {
+        if (!array_key_exists('horarios', $dados)) {
+            return null;
+        }
+
+        if (!is_array($dados['horarios'])) {
+            throw new InvalidArgumentException('Horários inválidos.');
+        }
+
+        $nomesDias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+        $formatoHora = '/^([01]\d|2[0-3]):[0-5]\d$/';
+        $porDia = [];
+
+        foreach ($dados['horarios'] as $faixa) {
+            if (!is_array($faixa)) {
+                throw new InvalidArgumentException('Horários inválidos.');
+            }
+
+            $dia = filter_var($faixa['nu_dia_semana'] ?? null, FILTER_VALIDATE_INT);
+            $abertura = (string) ($faixa['hr_abertura'] ?? '');
+            $fechamento = (string) ($faixa['hr_fechamento'] ?? '');
+
+            if ($dia === false || $dia < 0 || $dia > 6) {
+                throw new InvalidArgumentException('Dia da semana inválido.');
+            }
+
+            if (!preg_match($formatoHora, $abertura) || !preg_match($formatoHora, $fechamento)) {
+                throw new InvalidArgumentException('Informe os horários no formato HH:MM.');
+            }
+
+            if ($fechamento <= $abertura) {
+                throw new InvalidArgumentException(
+                    "No(a) {$nomesDias[$dia]}, o fechamento deve ser depois da abertura."
+                );
+            }
+
+            $porDia[$dia][] = [
+                'nu_dia_semana' => $dia,
+                'hr_abertura' => $abertura,
+                'hr_fechamento' => $fechamento,
+            ];
+        }
+
+        $horarios = [];
+
+        foreach ($porDia as $dia => $faixas) {
+            usort($faixas, fn(array $a, array $b) => strcmp($a['hr_abertura'], $b['hr_abertura']));
+
+            for ($i = 1; $i < count($faixas); $i++) {
+                if ($faixas[$i]['hr_abertura'] < $faixas[$i - 1]['hr_fechamento']) {
+                    throw new InvalidArgumentException("Os horários de {$nomesDias[$dia]} se sobrepõem.");
+                }
+            }
+
+            array_push($horarios, ...$faixas);
+        }
+
+        return $horarios;
     }
 
     private function lerJson(): array

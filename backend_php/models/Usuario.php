@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/AvaliacaoMercado.php';
 
 class Usuario
 {
@@ -92,12 +93,57 @@ class Usuario
         return $usuario ?: null;
     }
 
-    public function excluir(int $idUsuario): bool
+    public function alterarPerfil(int $idUsuario, array $dados): ?array
     {
-        $sql = 'DELETE FROM tb_usuario WHERE id_usuario = :id_usuario';
+        $sql = 'UPDATE tb_usuario
+                SET nm_usuario = :nm_usuario,
+                    ds_email = :ds_email
+                WHERE id_usuario = :id_usuario
+                RETURNING id_usuario, nm_usuario, ds_email';
+
         $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(':nm_usuario', $dados['nm_usuario']);
+        $stmt->bindValue(':ds_email', $dados['ds_email']);
         $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->rowCount() > 0;
+
+        $usuario = $stmt->fetch();
+        return $usuario ?: null;
+    }
+
+    public function excluir(int $idUsuario): bool
+    {
+        $this->conexao->beginTransaction();
+
+        try {
+            $stmt = $this->conexao->prepare(
+                'SELECT DISTINCT id_mercado FROM tb_avaliacao_mercado WHERE id_usuario = :id_usuario'
+            );
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+            $mercadosAvaliados = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach (['tb_produto_favorito', 'tb_mercado_favorito', 'tb_avaliacao_mercado'] as $tabela) {
+                $stmt = $this->conexao->prepare("DELETE FROM {$tabela} WHERE id_usuario = :id_usuario");
+                $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+
+            if ($mercadosAvaliados) {
+                $ids = implode(',', array_map('intval', $mercadosAvaliados));
+                $this->conexao->exec(AvaliacaoMercado::SQL_RECALCULAR_MEDIA . " WHERE id_mercado IN ({$ids})");
+            }
+
+            $stmt = $this->conexao->prepare('DELETE FROM tb_usuario WHERE id_usuario = :id_usuario');
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+            $excluiu = $stmt->rowCount() > 0;
+
+            $this->conexao->commit();
+            return $excluiu;
+        } catch (Throwable $e) {
+            $this->conexao->rollBack();
+            throw $e;
+        }
     }
 }

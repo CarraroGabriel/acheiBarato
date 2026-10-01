@@ -3,6 +3,7 @@ import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/edita_produto.dart';
 import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/horario_funcionamento.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 
 class PerfilMercado extends StatefulWidget {
@@ -28,6 +29,9 @@ class _PerfilMercadoState extends State<PerfilMercado> {
   List<Map<String, dynamic>> _produtos = [];
   bool _favorito = false;
   bool _alternandoFavorito = false;
+  int? _minhaNota;
+  bool _enviandoAvaliacao = false;
+
   bool get _podeFavoritar => !widget.modoLojista && widget.idUsuario != null;
 
   @override
@@ -35,6 +39,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
     super.initState();
     _carregarDados();
     _carregarFavorito();
+    _carregarMinhaAvaliacao();
   }
 
   Future<void> _carregarDados() async {
@@ -104,6 +109,99 @@ class _PerfilMercadoState extends State<PerfilMercado> {
     }
   }
 
+  Future<void> _carregarMinhaAvaliacao() async {
+    if (!_podeFavoritar) return;
+    try {
+      final r = await ApiService.get(
+        'mercados/${widget.idMercado}/avaliacao?id_usuario=${widget.idUsuario}',
+      );
+      final nota = int.tryParse((r['dados']['nu_nota'] ?? '').toString());
+      if (mounted) setState(() => _minhaNota = nota);
+    } catch (_) {}
+  }
+
+  Future<void> _abrirAvaliacao() async {
+    var nota = _minhaNota ?? 0;
+
+    final escolhida = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setStateDialog) => AlertDialog(
+          title: Text(
+            _minhaNota == null ? 'Avaliar mercado' : 'Alterar avaliação',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Quantas estrelas você dá para '
+                '${_mercado?['nm_mercado'] ?? 'este mercado'}?',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  5,
+                  (i) => IconButton(
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 34,
+                    onPressed: () => setStateDialog(() => nota = i + 1),
+                    icon: Icon(
+                      i < nota ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: nota == 0
+                  ? null
+                  : () => Navigator.pop(dialogContext, nota),
+              child: const Text('Enviar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (escolhida != null) _enviarAvaliacao(escolhida);
+  }
+
+  Future<void> _enviarAvaliacao(int nota) async {
+    setState(() => _enviandoAvaliacao = true);
+
+    try {
+      final r = await ApiService.post(
+        'mercados/${widget.idMercado}/avaliacao',
+        {'id_usuario': widget.idUsuario, 'nu_nota': nota},
+      );
+      final dados = Map<String, dynamic>.from(r['dados'] as Map);
+
+      if (!mounted) return;
+
+      setState(() {
+        _minhaNota = nota;
+        _mercado?['nu_avg_nota'] = dados['nu_avg_nota'];
+        _mercado?['nul_avaliacoes'] = dados['nul_avaliacoes'];
+      });
+      _mostrarMensagem((r['mensagem'] ?? 'Avaliação registrada.').toString());
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível conectar ao servidor.');
+    } finally {
+      if (mounted) setState(() => _enviandoAvaliacao = false);
+    }
+  }
+
   void _mostrarMensagem(String m) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
@@ -127,7 +225,9 @@ class _PerfilMercadoState extends State<PerfilMercado> {
       drawer: widget.modoLojista
           ? MenuLateral(
               nome: (_mercado?['nm_mercado'] ?? 'Mercado').toString(),
+              id: widget.idMercado,
               isUsuario: false,
+              aoAlterarPerfil: (_) => _carregarDados(),
             )
           : null,
       floatingActionButton: widget.modoLojista
@@ -282,6 +382,29 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                 ],
               ),
             ),
+            if (_podeFavoritar) ...[
+              const SizedBox(height: 12),
+              Center(
+                child: _enviandoAvaliacao
+                    ? const CircularProgressIndicator()
+                    : OutlinedButton.icon(
+                        onPressed: _abrirAvaliacao,
+                        icon: Icon(
+                          _minhaNota == null ? Icons.star_border : Icons.star,
+                          color: Colors.amber,
+                        ),
+                        label: Text(
+                          _minhaNota == null
+                              ? 'Avaliar mercado'
+                              : 'Sua avaliação: $_minhaNota ★  •  Alterar',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                      ),
+              ),
+            ],
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -310,6 +433,13 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                 ),
               ),
             ),
+            if (!widget.modoLojista) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: HorarioFuncionamento(horarios: mercado['horarios']),
+              ),
+            ],
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

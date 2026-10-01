@@ -20,6 +20,7 @@ class HomeUsuario extends StatefulWidget {
 }
 
 class _HomeUsuarioState extends State<HomeUsuario> {
+  late String _nomeUsuario = widget.nomeUsuario;
   bool _carregando = true;
   String? _erro;
   List<Map<String, dynamic>> _mercados = [];
@@ -81,7 +82,11 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
         ],
       ),
-      drawer: MenuLateral(nome: widget.nomeUsuario),
+      drawer: MenuLateral(
+        nome: _nomeUsuario,
+        id: widget.idUsuario,
+        aoAlterarPerfil: (nome) => setState(() => _nomeUsuario = nome),
+      ),
       body: RefreshIndicator(
         onRefresh: _carregarDados,
         child: SingleChildScrollView(
@@ -241,7 +246,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
       bottomNavigationBar: BottomNav(
         indiceAtual: 0,
         idUsuario: widget.idUsuario,
-        nomeUsuario: widget.nomeUsuario,
+        nomeUsuario: _nomeUsuario,
       ),
     );
   }
@@ -407,7 +412,8 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
           const SizedBox(height: 6),
           Text(
-            (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '').toString(),
+            (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '')
+                .toString(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),

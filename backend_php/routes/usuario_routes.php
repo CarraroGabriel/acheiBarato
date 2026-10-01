@@ -30,7 +30,12 @@ function tratarRotasUsuario(string $metodo, array $partesUri): void
             if ($id_usuario === null) {
                 Response::json(false, 'Informe o id_usuario na URL para alterar.', null, 400);
             }
-            $controller->alterar($id_usuario);
+
+            if (($partesUri[2] ?? null) === 'perfil') {
+                $controller->alterarPerfil($id_usuario);
+            } else {
+                $controller->alterar($id_usuario);
+            }
             break;
 
         case 'DELETE':

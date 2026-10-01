@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/Response.php';
-
 class UsuarioController
 {
     private Usuario $usuario;
@@ -73,6 +72,43 @@ class UsuarioController
             Response::json(false, $e->getMessage(), null, 400);
         } catch (Throwable $e) {
             Response::json(false, 'Erro ao alterar usuário.', null, 500);
+        }
+    }
+
+    public function alterarPerfil(int $idUsuario): void
+    {
+        $dados = $this->lerJson();
+
+        try {
+            $perfil = [
+                'nm_usuario' => trim((string) ($dados['nm_usuario'] ?? '')),
+                'ds_email' => trim((string) ($dados['ds_email'] ?? '')),
+            ];
+
+            if (!preg_match('/^.{1,50}$/u', $perfil['nm_usuario'])) {
+                throw new InvalidArgumentException('Informe um nome com até 50 caracteres.');
+            }
+
+            if (!filter_var($perfil['ds_email'], FILTER_VALIDATE_EMAIL) || strlen($perfil['ds_email']) > 50) {
+                throw new InvalidArgumentException('Informe um e-mail válido.');
+            }
+
+            $resultado = $this->usuario->alterarPerfil($idUsuario, $perfil);
+
+            if ($resultado === null) {
+                Response::json(false, 'Usuário não encontrado.', null, 404);
+            }
+
+            Response::json(true, 'Perfil atualizado com sucesso.', $resultado, 200);
+        } catch (InvalidArgumentException $e) {
+            Response::json(false, $e->getMessage(), null, 400);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                Response::json(false, 'Este e-mail já está em uso.', null, 409);
+            }
+            Response::json(false, 'Erro ao atualizar perfil.', null, 500);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao atualizar perfil.', null, 500);
         }
     }
 

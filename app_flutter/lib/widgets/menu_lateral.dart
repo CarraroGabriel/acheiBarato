@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:achei_barato/telas/editar_mercado.dart';
+import 'package:achei_barato/telas/editar_usuario.dart';
 import 'package:achei_barato/telas/login.dart';
 
 class MenuLateral extends StatelessWidget {
   final String nome;
   final bool isUsuario;
+  final int id;
+  final ValueChanged<String>? aoAlterarPerfil;
 
-  const MenuLateral({super.key, required this.nome, this.isUsuario = true});
+  const MenuLateral({
+    super.key,
+    required this.nome,
+    required this.id,
+    this.isUsuario = true,
+    this.aoAlterarPerfil,
+  });
+
+  Future<void> _abrirPerfil(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    navigator.pop();
+
+    final novoNome = await navigator.push<String>(
+      MaterialPageRoute(
+        builder: (_) => isUsuario
+            ? EditarUsuario(idUsuario: id)
+            : EditarMercado(idMercado: id),
+      ),
+    );
+
+    if (novoNome != null) aoAlterarPerfil?.call(novoNome);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +64,11 @@ class MenuLateral extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Perfil'),
+            onTap: () => _abrirPerfil(context),
           ),
           ListTile(
             leading: const Icon(Icons.settings_outlined),

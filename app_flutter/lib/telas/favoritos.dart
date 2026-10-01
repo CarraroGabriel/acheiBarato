@@ -21,6 +21,7 @@ class Favoritos extends StatefulWidget {
 }
 
 class _FavoritosState extends State<Favoritos> {
+  late String _nomeUsuario = widget.nomeUsuario;
   bool _carregando = true;
   String? _erro;
   List<Map<String, dynamic>> _mercados = [];
@@ -86,10 +87,8 @@ class _FavoritosState extends State<Favoritos> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PerfilMercado(
-          idMercado: idMercado,
-          idUsuario: widget.idUsuario,
-        ),
+        builder: (_) =>
+            PerfilMercado(idMercado: idMercado, idUsuario: widget.idUsuario),
       ),
     );
   }
@@ -107,12 +106,16 @@ class _FavoritosState extends State<Favoritos> {
           ),
         ],
       ),
-      drawer: MenuLateral(nome: widget.nomeUsuario),
+      drawer: MenuLateral(
+        nome: _nomeUsuario,
+        id: widget.idUsuario,
+        aoAlterarPerfil: (nome) => setState(() => _nomeUsuario = nome),
+      ),
       body: _buildBody(),
       bottomNavigationBar: BottomNav(
         indiceAtual: 2,
         idUsuario: widget.idUsuario,
-        nomeUsuario: widget.nomeUsuario,
+        nomeUsuario: _nomeUsuario,
       ),
     );
   }
@@ -352,7 +355,8 @@ class _FavoritosState extends State<Favoritos> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '').toString(),
+            (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '')
+                .toString(),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),

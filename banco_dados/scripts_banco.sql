@@ -193,12 +193,16 @@ CREATE TABLE Tb_Avaliacao_Mercado (
                 id_mercado INTEGER NOT NULL,
                 dt_avaliacao DATE NOT NULL,
                 nu_nota INTEGER NOT NULL,
-                CONSTRAINT pk_avaliacao_mercado PRIMARY KEY (id_avaliacao, id_usuario, id_mercado)
+                CONSTRAINT pk_avaliacao_mercado PRIMARY KEY (id_avaliacao, id_usuario, id_mercado),
+                CONSTRAINT ck_avaliacao_mercado_nota CHECK (nu_nota BETWEEN 1 AND 5)
 );
 
 CREATE SEQUENCE IF NOT EXISTS sq_tb_avaliacao_mercado START 1;
 ALTER TABLE tb_avaliacao_mercado
     ALTER COLUMN id_avaliacao SET DEFAULT nextval('sq_tb_avaliacao_mercado');
+
+/* Cada usuário avalia um mercado uma única vez; avaliar de novo substitui a nota. */
+CREATE UNIQUE INDEX tb_avaliacao_mercado_uk ON tb_avaliacao_mercado (id_usuario, id_mercado);
 
 
 CREATE TABLE Tb_Mercado_Favorito (
