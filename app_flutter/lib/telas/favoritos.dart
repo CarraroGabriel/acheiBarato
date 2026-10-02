@@ -5,6 +5,7 @@ import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
+import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class Favoritos extends StatefulWidget {
   final int idUsuario;
@@ -428,8 +429,12 @@ class _FavoritosState extends State<Favoritos> {
                             'Melhor preço',
                             Colors.green.shade700,
                           ),
-                        if (promocao && disponivel)
+                        if (promocao && disponivel) ...[
                           _buildSelo(Icons.local_offer, 'Promoção', Colors.red),
+                          TempoPromocao(
+                            segundosRestantes: item['nu_segundos_restantes'],
+                          ),
+                        ],
                         if (!disponivel)
                           _buildSelo(Icons.block, 'Indisponível', Colors.grey),
                       ],

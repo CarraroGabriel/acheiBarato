@@ -15,7 +15,7 @@ class Mercado
     public function listar(): array
     {
         $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
-                       fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                       fl_motoboy, nu_taxa_entrega, ds_foto_mercado, nu_latitude, nu_longitude,
                        nu_avg_nota, nul_avaliacoes
                 FROM tb_mercado
                 ORDER BY nm_mercado';
@@ -28,7 +28,7 @@ class Mercado
     public function consultarPorId(int $idMercado): ?array
     {
         $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
-                       fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
+                       fl_motoboy, nu_taxa_entrega, ds_foto_mercado, nu_latitude, nu_longitude,
                        nu_avg_nota, nul_avaliacoes
                 FROM tb_mercado
                 WHERE id_mercado = :id_mercado';
@@ -161,10 +161,11 @@ class Mercado
                     ds_email = :ds_email,
                     nu_cep = :nu_cep,
                     nm_endereco = :nm_endereco,
-                    fl_motoboy = :fl_motoboy
+                    fl_motoboy = :fl_motoboy,
+                    nu_taxa_entrega = :nu_taxa_entrega
                 WHERE id_mercado = :id_mercado
                 RETURNING id_mercado, nm_mercado, ds_email, nu_cep, nm_endereco,
-                          fl_motoboy, ds_foto_mercado';
+                          fl_motoboy, nu_taxa_entrega, ds_foto_mercado';
 
         $this->conexao->beginTransaction();
 
@@ -175,6 +176,7 @@ class Mercado
             $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
             $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
             $stmt->bindValue(':fl_motoboy', $dados['fl_motoboy'], PDO::PARAM_BOOL);
+            $stmt->bindValue(':nu_taxa_entrega', $dados['nu_taxa_entrega']);
             $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
             $stmt->execute();
 

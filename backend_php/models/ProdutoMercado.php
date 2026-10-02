@@ -4,15 +4,30 @@ require_once __DIR__ . '/../config/Database.php';
 
 class ProdutoMercado
 {
+    public const SQL_PROMOCAO_ATIVA =
+        '(pm.fl_promocao AND (pm.dt_fim_promocao IS NULL OR pm.dt_fim_promocao > NOW()))';
+
+    public const SQL_CAMPOS_PROMOCAO =
+        self::SQL_PROMOCAO_ATIVA . ' AS fl_promocao,
+        COALESCE(pm.fl_promocao AND pm.dt_fim_promocao <= NOW(), FALSE) AS fl_promocao_expirada,
+        pm.nu_desconto,
+        CASE WHEN ' . self::SQL_PROMOCAO_ATIVA . '
+             THEN ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2)
+             ELSE pm.nu_valor
+        END AS nu_valor_final,
+        TO_CHAR(pm.dt_fim_promocao AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS"Z"\') AS dt_fim_promocao,
+        CASE WHEN ' . self::SQL_PROMOCAO_ATIVA . ' AND pm.dt_fim_promocao IS NOT NULL
+             THEN FLOOR(EXTRACT(EPOCH FROM pm.dt_fim_promocao - NOW()))::INTEGER
+        END AS nu_segundos_restantes';
+
     private const SELECT_BASE = 'SELECT pm.id_produto_mercado, pm.id_item_produto, pm.id_mercado,
                        ip.id_produto, ip.nm_produto, ip.nm_tipo, ip.nm_marca,
                        ip.nm_categoria AS ds_categoria, ip.ds_foto_produto,
                        ip.nu_medida, ip.sg_unidade, ip.ds_item_produto,
                        m.nm_mercado,
-                       pm.nu_valor, pm.nu_qtde, pm.fl_promocao, pm.fl_disponivel,
-                       pm.dt_atualizacao,
-                       pm.nu_desconto,
-                       ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final
+                       pm.nu_valor, pm.nu_qtde, pm.fl_disponivel,
+                       pm.dt_atualizacao, '
+                       . self::SQL_CAMPOS_PROMOCAO . '
                 FROM tb_produto_mercado pm
                 INNER JOIN vw_item_produto ip ON ip.id_item_produto = pm.id_item_produto
                 INNER JOIN tb_mercado m ON m.id_mercado = pm.id_mercado';
@@ -34,7 +49,7 @@ class ProdutoMercado
         }
 
         // Produtos em promoção ocupam o topo da lista.
-        $sql .= ' ORDER BY pm.fl_promocao DESC, ip.ds_item_produto, ip.nm_marca';
+        $sql .= ' ORDER BY ' . self::SQL_PROMOCAO_ATIVA . ' DESC, ip.ds_item_produto, ip.nm_marca';
 
         $stmt = $this->conexao->prepare($sql);
 
@@ -118,11 +133,9 @@ class ProdutoMercado
                     fl_promocao = :fl_promocao,
                     fl_disponivel = :fl_disponivel,
                     dt_atualizacao = CURRENT_TIMESTAMP,
-                    nu_desconto = :nu_desconto
-                WHERE id_produto_mercado = :id_produto_mercado
-                RETURNING id_produto_mercado, id_item_produto, id_mercado,
-                          nu_valor, nu_qtde, fl_promocao, fl_disponivel,
-                          dt_atualizacao, nu_desconto';
+                    nu_desconto = :nu_desconto,
+                    dt_fim_promocao = CAST(:dt_fim_promocao AS TIMESTAMPTZ)
+                WHERE id_produto_mercado = :id_produto_mercado';
 
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(':nu_valor', $dados['nu_valor']);
@@ -131,10 +144,14 @@ class ProdutoMercado
         $stmt->bindValue(':fl_disponivel', $dados['fl_disponivel'], PDO::PARAM_BOOL);
         $stmt->bindValue(':id_produto_mercado', $idProdutoMercado, PDO::PARAM_INT);
         $stmt->bindValue(':nu_desconto', $dados['nu_desconto'], PDO::PARAM_INT);
+        $stmt->bindValue(':dt_fim_promocao', $dados['dt_fim_promocao']);
         $stmt->execute();
 
-        $produtoMercado = $stmt->fetch();
-        return $produtoMercado ?: null;
+        if ($stmt->rowCount() === 0) {
+            return null;
+        }
+
+        return $this->consultarPorId($idProdutoMercado);
     }
 
     public function excluir(int $idProdutoMercado): bool
@@ -149,7 +166,7 @@ class ProdutoMercado
     public function listarPromocoes(?int $idMercado = null, ?int $idUsuario = null): array
     {
         $sql = self::SELECT_BASE . '
-                WHERE pm.fl_promocao = TRUE
+                WHERE ' . self::SQL_PROMOCAO_ATIVA . '
                   AND pm.fl_disponivel = TRUE';
 
         if ($idMercado !== null) {

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/ProdutoMercado.php';
 
 class Favorito
 {
@@ -15,12 +16,12 @@ class Favorito
     public function listarMercados(int $idUsuario): array
     {
         $sql = 'SELECT m.id_mercado, m.nm_mercado, m.nm_endereco, m.ds_foto_mercado,
-                       m.fl_motoboy, m.nu_avg_nota, m.nul_avaliacoes,
+                       m.fl_motoboy, m.nu_taxa_entrega, m.nu_avg_nota, m.nul_avaliacoes,
                        m.nu_latitude, m.nu_longitude,
                        (SELECT COUNT(*)
                           FROM tb_produto_mercado pm
                          WHERE pm.id_mercado = m.id_mercado
-                           AND pm.fl_promocao = TRUE
+                           AND ' . ProdutoMercado::SQL_PROMOCAO_ATIVA . '
                            AND pm.fl_disponivel = TRUE) AS qt_promocoes
                 FROM tb_mercado m
                 WHERE EXISTS (
@@ -51,6 +52,7 @@ class Favorito
                 'nm_endereco'     => $m['nm_endereco'],
                 'ds_foto_mercado' => $m['ds_foto_mercado'],
                 'fl_motoboy'      => $this->paraBool($m['fl_motoboy']),
+                'nu_taxa_entrega' => (float) $m['nu_taxa_entrega'],
                 'nu_avg_nota'     => (float) $m['nu_avg_nota'],
                 'nul_avaliacoes'  => (int) $m['nul_avaliacoes'],
                 'nu_latitude'     => (float) $m['nu_latitude'],
@@ -70,8 +72,8 @@ class Favorito
         $sql = 'SELECT ip.id_item_produto, ip.id_produto, ip.nm_produto, ip.nm_marca,
                        ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_item_produto,
                        pm.id_produto_mercado, pm.nu_valor, pm.nu_qtde,
-                       pm.fl_promocao, pm.fl_disponivel, pm.dt_atualizacao, pm.nu_desconto,
-                       ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2) AS nu_valor_final,
+                       pm.fl_disponivel, pm.dt_atualizacao,
+                       ' . ProdutoMercado::SQL_CAMPOS_PROMOCAO . ',
                        m.id_mercado, m.nm_mercado, m.nu_latitude, m.nu_longitude, m.fl_motoboy
                 FROM tb_produto_favorito pf
                 INNER JOIN vw_item_produto ip ON ip.id_item_produto = pf.id_item_produto
@@ -102,7 +104,6 @@ class Favorito
                 ];
             }
 
-            // Produto favorito que nenhum mercado possui: fica com a lista vazia.
             if ($linha['id_mercado'] === null) {
                 continue;
             }
@@ -116,6 +117,9 @@ class Favorito
                 'nu_valor_final'     => (float) $linha['nu_valor_final'],
                 'nu_qtde'            => (int) $linha['nu_qtde'],
                 'fl_promocao'        => $this->paraBool($linha['fl_promocao']),
+                'nu_segundos_restantes' => $linha['nu_segundos_restantes'] === null
+                    ? null
+                    : (int) $linha['nu_segundos_restantes'],
                 'fl_disponivel'      => $this->paraBool($linha['fl_disponivel']),
                 'fl_motoboy'         => $this->paraBool($linha['fl_motoboy']),
                 'dt_atualizacao'     => $linha['dt_atualizacao'],
@@ -133,7 +137,6 @@ class Favorito
         return array_values($produtos);
     }
 
-    // Regra de negócio: menor preço entre os mercados DISPONÍVEIS. Empate marca todos.
     private function marcarMelhorPreco(array $mercados): array
     {
         $menor = null;

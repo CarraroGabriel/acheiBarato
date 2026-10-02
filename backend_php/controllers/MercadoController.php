@@ -125,6 +125,18 @@ class MercadoController
                 throw new InvalidArgumentException('Informe um endereço com até 50 caracteres.');
             }
 
+            $perfil['nu_taxa_entrega'] = 0.0;
+
+            if ($perfil['fl_motoboy']) {
+                $taxa = str_replace(',', '.', trim((string) ($dados['nu_taxa_entrega'] ?? '')));
+
+                if ($taxa === '' || !is_numeric($taxa) || (float) $taxa < 0 || (float) $taxa > 999.99) {
+                    throw new InvalidArgumentException('Informe a taxa de entrega (use 0 para entrega grátis).');
+                }
+
+                $perfil['nu_taxa_entrega'] = round((float) $taxa, 2);
+            }
+
             $resultado = $this->mercado->alterarPerfil($idMercado, $perfil);
 
             if ($resultado === null) {

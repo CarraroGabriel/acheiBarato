@@ -5,6 +5,7 @@ import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/horario_funcionamento.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
+import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class PerfilMercado extends StatefulWidget {
   final int idMercado;
@@ -373,7 +374,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                         ? Colors.green.shade600
                         : Colors.grey.shade600,
                     label: temMotoboy
-                        ? 'Tele-entrega disponível'
+                        ? _textoTaxaEntrega(mercado['nu_taxa_entrega'])
                         : 'Sem tele-entrega',
                     bgColor: temMotoboy
                         ? Colors.green.shade50
@@ -586,6 +587,17 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   'Base: ${_formatarValor(produto['nu_valor'])} • -${_toInt(produto['nu_desconto'])}%',
                   style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
+              if (_toBool(produto['fl_promocao']))
+                TempoPromocao(
+                  segundosRestantes: produto['nu_segundos_restantes'],
+                  tamanhoFonte: 10,
+                ),
+              if (widget.modoLojista &&
+                  _toBool(produto['fl_promocao_expirada']))
+                Text(
+                  'Promoção expirada',
+                  style: TextStyle(fontSize: 10, color: Colors.orange.shade800),
+                ),
             ],
           ),
         ],
@@ -614,6 +626,13 @@ class _PerfilMercadoState extends State<PerfilMercado> {
   String _formatarValor(dynamic valor) {
     final numero = double.tryParse(valor.toString().replaceAll(',', '.')) ?? 0;
     return 'R\$ ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  String _textoTaxaEntrega(dynamic taxa) {
+    final valor = double.tryParse((taxa ?? '').toString()) ?? 0;
+    return valor <= 0
+        ? 'Tele-entrega grátis'
+        : 'Tele-entrega: ${_formatarValor(valor)}';
   }
 
   String _formatarNota(dynamic valor) {

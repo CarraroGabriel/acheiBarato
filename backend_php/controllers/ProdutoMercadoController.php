@@ -88,6 +88,10 @@ class ProdutoMercadoController
                 throw new InvalidArgumentException('Informe o percentual de desconto da promoção.');
             }
 
+            $dados['dt_fim_promocao'] = $dados['fl_promocao']
+                ? $this->lerFimPromocao($dados['dt_fim_promocao'] ?? null)
+                : null;
+
             $resultado = $this->produtoMercado->alterar($idProdutoMercado, $dados);
 
             if ($resultado === null) {
@@ -134,6 +138,29 @@ class ProdutoMercadoController
         }
     }
 
+    /**
+     * Término da promoção, em data/hora ISO 8601 com fuso (ex.: 2026-10-02T23:59:00-03:00).
+     * Vazio/nulo = promoção sem prazo. Retorna a data no formato aceito pelo PostgreSQL.
+     */
+    private function lerFimPromocao(mixed $valor): ?string
+    {
+        if ($valor === null || trim((string) $valor) === '') {
+            return null;
+        }
+
+        try {
+            $fim = new DateTimeImmutable((string) $valor);
+        } catch (Exception $e) {
+            throw new InvalidArgumentException('Data de término da promoção inválida.');
+        }
+
+        if ($fim <= new DateTimeImmutable('now')) {
+            throw new InvalidArgumentException('O término da promoção deve ser depois de agora.');
+        }
+
+        return $fim->format(DATE_ATOM);
+    }
+
     private function lerJson(): array
     {
         $dados = json_decode(file_get_contents('php://input'), true);
@@ -153,7 +180,7 @@ class ProdutoMercadoController
         [$dados['id_marca'], $dados['nm_marca']] = $this->lerReferencia($dados, 'marca', 40);
 
         $dados['id_mercado'] = (int) $dados['id_mercado'];
-        $dados['id_categoria'] = (int) ($dados['id_categoria'] ?? 0) ?: null; // usada só se o produto for novo
+        $dados['id_categoria'] = (int) ($dados['id_categoria'] ?? 0) ?: null;
         $dados['id_unidade'] = (int) $dados['id_unidade'];
         $dados['nu_medida'] = $this->normalizarNumeroDecimal($dados['nu_medida']);
         $dados['nu_valor'] = $this->normalizarNumeroDecimal($dados['nu_valor']);

@@ -4,6 +4,7 @@ import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
+import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class HomeUsuario extends StatefulWidget {
   final int idUsuario;
@@ -433,6 +434,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
               color: Colors.red,
             ),
           ),
+          TempoPromocao(segundosRestantes: produto['nu_segundos_restantes']),
         ],
       ),
     );

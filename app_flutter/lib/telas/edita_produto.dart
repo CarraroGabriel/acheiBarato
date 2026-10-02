@@ -6,10 +6,7 @@ import 'package:achei_barato/widgets/botao_primario.dart';
 class EdicaoProduto extends StatefulWidget {
   final int idProdutoMercado;
 
-  const EdicaoProduto({
-    super.key,
-    required this.idProdutoMercado,
-  });
+  const EdicaoProduto({super.key, required this.idProdutoMercado});
 
   @override
   State<EdicaoProduto> createState() => _EdicaoProdutoState();
@@ -19,6 +16,11 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
   bool _emPromocao = false;
   bool _disponivel = true;
   int? _descontoSelecionado;
+
+  DateTime? _fimPromocao;
+  String _prazoSelecionado = 'sem_prazo';
+  DateTime? _promocaoExpiradaEm;
+
   bool _carregando = true;
   bool _salvando = false;
   String? _erro;
@@ -64,6 +66,17 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
         _qtdeController.text = _toInt(produto['nu_qtde']).toString();
         final desconto = _toInt(produto['nu_desconto']);
         _descontoSelecionado = desconto > 0 ? desconto : null;
+
+        final fim = DateTime.tryParse(
+          (produto['dt_fim_promocao'] ?? '').toString(),
+        )?.toLocal();
+
+        if (_emPromocao) {
+          _fimPromocao = fim;
+          _prazoSelecionado = fim == null ? 'sem_prazo' : 'personalizado';
+        } else if (_toBool(produto['fl_promocao_expirada'])) {
+          _promocaoExpiradaEm = fim;
+        }
       });
     } on ApiException catch (e) {
       if (mounted) setState(() => _erro = e.mensagem);
@@ -92,19 +105,26 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
       return;
     }
 
+    if (_emPromocao &&
+        _fimPromocao != null &&
+        !_fimPromocao!.isAfter(DateTime.now())) {
+      _mostrarMensagem('O término da promoção deve ser depois de agora.');
+      return;
+    }
+
     setState(() => _salvando = true);
 
     try {
-      await ApiService.put(
-        'produto_mercado/${widget.idProdutoMercado}',
-        {
-          'nu_valor': double.parse(valorDigitado.toStringAsFixed(2)), // sempre o base
-          'nu_qtde': quantidade,
-          'fl_promocao': _emPromocao,
-          'nu_desconto': _emPromocao ? _descontoSelecionado : 0,
-          'fl_disponivel': _disponivel,
-        },
-      );
+      await ApiService.put('produto_mercado/${widget.idProdutoMercado}', {
+        'nu_valor': double.parse(valorDigitado.toStringAsFixed(2)),
+        'nu_qtde': quantidade,
+        'fl_promocao': _emPromocao,
+        'nu_desconto': _emPromocao ? _descontoSelecionado : 0,
+        'dt_fim_promocao': _emPromocao && _fimPromocao != null
+            ? _fimPromocao!.toUtc().toIso8601String()
+            : null,
+        'fl_disponivel': _disponivel,
+      });
 
       if (!mounted) return;
 
@@ -126,9 +146,7 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
     setState(() => _salvando = true);
 
     try {
-      await ApiService.delete(
-        'produto_mercado/${widget.idProdutoMercado}',
-      );
+      await ApiService.delete('produto_mercado/${widget.idProdutoMercado}');
 
       if (!mounted) return;
 
@@ -147,17 +165,13 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
 
   void _mostrarMensagem(String mensagem) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const AcheiBaratoAppBar(),
-      body: _buildBody(),
-    );
+    return Scaffold(appBar: const AcheiBaratoAppBar(), body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -226,7 +240,9 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
                       child: Column(
                         children: [
                           Icon(
-                            _disponivel ? Icons.visibility : Icons.visibility_off,
+                            _disponivel
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                             color: _disponivel ? Colors.green : Colors.grey,
                           ),
                           const SizedBox(height: 4),
@@ -250,7 +266,11 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
                   child: GestureDetector(
                     onTap: () => setState(() {
                       _emPromocao = !_emPromocao;
-                      if (!_emPromocao) _descontoSelecionado = null;
+                      if (!_emPromocao) {
+                        _descontoSelecionado = null;
+                        _fimPromocao = null;
+                        _prazoSelecionado = 'sem_prazo';
+                      }
                     }),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
@@ -316,10 +336,29 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
                 ),
               ],
             ),
+            if (_promocaoExpiradaEm != null && !_emPromocao) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Text(
+                  'A promoção deste produto terminou em '
+                  '${_formatarDataHora(_promocaoExpiradaEm!)}. '
+                  'Toque em "Sem Promoção" para criar uma nova.',
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             TextField(
               controller: _valorController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Valor / Valor base (R\$)',
@@ -366,55 +405,107 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _descontos.map((d) {
-                        final selecionado = _descontoSelecionado == d;
-                        return GestureDetector(
-                          onTap: () => setState(() => _descontoSelecionado = d),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selecionado ? Colors.red : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: selecionado
-                                    ? Colors.red
-                                    : Colors.red.shade200,
-                              ),
-                            ),
-                            child: Text(
+                      children: _descontos
+                          .map(
+                            (d) => _buildOpcao(
                               '$d%',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: selecionado ? Colors.white : Colors.red,
-                              ),
+                              _descontoSelecionado == d,
+                              () => setState(() => _descontoSelecionado = d),
                             ),
-                          ),
-                        );
-                      }).toList(),
+                          )
+                          .toList(),
                     ),
                     if (_descontoSelecionado != null) ...[
                       const SizedBox(height: 10),
-                      Builder(builder: (_) {
-                        final base = double.tryParse(
-                              _valorController.text.replaceAll(',', '.'),
-                            ) ??
-                            0;
-                        final valorFinal =
-                            base * (1 - _descontoSelecionado! / 100);
-                        return Text(
-                          'Preço final: R\$ ${valorFinal.toStringAsFixed(2).replaceAll('.', ',')}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.red.shade700,
-                          ),
-                        );
-                      }),
+                      Builder(
+                        builder: (_) {
+                          final base =
+                              double.tryParse(
+                                _valorController.text.replaceAll(',', '.'),
+                              ) ??
+                              0;
+                          final valorFinal =
+                              base * (1 - _descontoSelecionado! / 100);
+                          return Text(
+                            'Preço final: R\$ ${valorFinal.toStringAsFixed(2).replaceAll('.', ',')}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade700,
+                            ),
+                          );
+                        },
+                      ),
                     ],
+                    const SizedBox(height: 20),
+                    const Row(
+                      children: [
+                        Icon(Icons.timer_outlined, color: Colors.red, size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          'Duração da Promoção',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildOpcao(
+                          'Até o fim do dia',
+                          _prazoSelecionado == 'fim_dia',
+                          () => _definirPrazo('fim_dia', _fimDoDia()),
+                        ),
+                        _buildOpcao(
+                          '3 horas',
+                          _prazoSelecionado == '3h',
+                          () => _definirPrazo(
+                            '3h',
+                            DateTime.now().add(const Duration(hours: 3)),
+                          ),
+                        ),
+                        _buildOpcao(
+                          '24 horas',
+                          _prazoSelecionado == '24h',
+                          () => _definirPrazo(
+                            '24h',
+                            DateTime.now().add(const Duration(hours: 24)),
+                          ),
+                        ),
+                        _buildOpcao(
+                          '7 dias',
+                          _prazoSelecionado == '7d',
+                          () => _definirPrazo(
+                            '7d',
+                            DateTime.now().add(const Duration(days: 7)),
+                          ),
+                        ),
+                        _buildOpcao(
+                          'Escolher data e hora',
+                          _prazoSelecionado == 'personalizado',
+                          _escolherDataHora,
+                        ),
+                        _buildOpcao(
+                          'Sem prazo',
+                          _prazoSelecionado == 'sem_prazo',
+                          () => _definirPrazo('sem_prazo', null),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _fimPromocao == null
+                          ? 'A promoção fica ativa até você desligá-la.'
+                          : 'Termina em ${_formatarDataHora(_fimPromocao!)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -423,10 +514,7 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
             if (_salvando)
               const Center(child: CircularProgressIndicator())
             else
-              BotaoPrimario(
-                texto: 'Salvar Alterações',
-                onPressed: _salvar,
-              ),
+              BotaoPrimario(texto: 'Salvar Alterações', onPressed: _salvar),
           ],
         ),
       ),
@@ -451,6 +539,90 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
             child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _definirPrazo(String opcao, DateTime? fim) {
+    setState(() {
+      _prazoSelecionado = opcao;
+      _fimPromocao = fim;
+    });
+  }
+
+  DateTime _fimDoDia() {
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day, 23, 59);
+    return hoje.isAfter(agora) ? hoje : hoje.add(const Duration(days: 1));
+  }
+
+  Future<void> _escolherDataHora() async {
+    final agora = DateTime.now();
+    final inicial = _fimPromocao ?? agora.add(const Duration(hours: 1));
+
+    final data = await showDatePicker(
+      context: context,
+      initialDate: inicial.isBefore(agora) ? agora : inicial,
+      firstDate: DateTime(agora.year, agora.month, agora.day),
+      lastDate: agora.add(const Duration(days: 365)),
+      helpText: 'Último dia da promoção',
+    );
+    if (data == null || !mounted) return;
+
+    final hora = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(inicial),
+      helpText: 'Horário de término',
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (hora == null) return;
+
+    final fim = DateTime(
+      data.year,
+      data.month,
+      data.day,
+      hora.hour,
+      hora.minute,
+    );
+
+    if (!fim.isAfter(DateTime.now())) {
+      _mostrarMensagem('Escolha um horário depois de agora.');
+      return;
+    }
+
+    _definirPrazo('personalizado', fim);
+  }
+
+  String _formatarDataHora(DateTime data) {
+    String doisDigitos(int n) => n.toString().padLeft(2, '0');
+    return '${doisDigitos(data.day)}/${doisDigitos(data.month)} '
+        'às ${doisDigitos(data.hour)}:${doisDigitos(data.minute)}';
+  }
+
+  Widget _buildOpcao(String texto, bool selecionado, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selecionado ? Colors.red : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selecionado ? Colors.red : Colors.red.shade200,
+          ),
+        ),
+        child: Text(
+          texto,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: selecionado ? Colors.white : Colors.red,
+          ),
+        ),
       ),
     );
   }

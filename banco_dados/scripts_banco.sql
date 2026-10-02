@@ -115,6 +115,7 @@ CREATE TABLE Tb_Mercado (
                 nm_endereco VARCHAR(50) NOT NULL,
                 ds_senha VARCHAR(255) NOT NULL, -- valor alto para caber o hash de senha
                 fl_motoboy BOOLEAN NOT NULL,
+                nu_taxa_entrega NUMERIC(5,2) NOT NULL DEFAULT 0, -- taxa da tele-entrega; 0 = grátis
                 ds_foto_mercado VARCHAR(50) NOT NULL,
                 nu_latitude NUMERIC NOT NULL,
                 nu_longitude NUMERIC NOT NULL,
@@ -144,6 +145,7 @@ CREATE TABLE Tb_Produto_Mercado (
                 fl_disponivel BOOLEAN NOT NULL,
                 dt_atualizacao DATE NOT NULL,
                 nu_desconto INTEGER NOT NULL DEFAULT 0,
+                dt_fim_promocao TIMESTAMPTZ, -- término da promoção; nulo = sem prazo
                 CONSTRAINT pk_produto_mercado PRIMARY KEY (id_produto_mercado),
                 CONSTRAINT tb_produto_mercado_uk UNIQUE (id_item_produto, id_mercado)
 );
@@ -180,8 +182,7 @@ CREATE UNIQUE INDEX tb_usuario_idx
  ON Tb_Usuario
  ( nu_cpf );
 
- /* O login do usuário é feito por e-mail. Para evitar duas contas com o mesmo
-    identificador de login, foi criado índices únicos de e-mail.*/
+-- remover futuramente fiz automático via email, o login é via CPF
 CREATE UNIQUE INDEX IF NOT EXISTS tb_usuario_email_idx
 ON tb_usuario
 (LOWER(ds_email));

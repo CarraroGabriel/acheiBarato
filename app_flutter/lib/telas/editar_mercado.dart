@@ -21,6 +21,7 @@ class _EditarMercadoState extends State<EditarMercado> {
   final _emailController = TextEditingController();
   final _cepController = TextEditingController();
   final _enderecoController = TextEditingController();
+  final _taxaController = TextEditingController();
 
   bool _temMotoboy = false;
   String? _fotoUrl;
@@ -43,6 +44,7 @@ class _EditarMercadoState extends State<EditarMercado> {
     _emailController.dispose();
     _cepController.dispose();
     _enderecoController.dispose();
+    _taxaController.dispose();
     super.dispose();
   }
 
@@ -67,6 +69,12 @@ class _EditarMercadoState extends State<EditarMercado> {
         );
         _enderecoController.text = (mercado['nm_endereco'] ?? '').toString();
         _temMotoboy = _toBool(mercado['fl_motoboy']);
+        final taxa = double.tryParse(
+          (mercado['nu_taxa_entrega'] ?? '').toString(),
+        );
+        _taxaController.text = taxa == null
+            ? ''
+            : taxa.toStringAsFixed(2).replaceAll('.', ',');
         _fotoUrl = (mercado['ds_foto_mercado'] ?? '').toString();
         _horarios = EditorHorarios.lerDaApi(mercado['horarios']);
       });
@@ -92,6 +100,16 @@ class _EditarMercadoState extends State<EditarMercado> {
       return;
     }
 
+    final taxa = double.tryParse(
+      _taxaController.text.trim().replaceAll(',', '.'),
+    );
+    if (_temMotoboy && (taxa == null || taxa < 0)) {
+      _mostrarMensagem(
+        'Informe a taxa de entrega (use 0 para entrega grátis).',
+      );
+      return;
+    }
+
     final erroHorarios = EditorHorarios.validar(_horarios);
     if (erroHorarios != null) {
       _mostrarMensagem(erroHorarios);
@@ -107,6 +125,7 @@ class _EditarMercadoState extends State<EditarMercado> {
         'nu_cep': _cepController.text.trim(),
         'nm_endereco': _enderecoController.text.trim(),
         'fl_motoboy': _temMotoboy,
+        'nu_taxa_entrega': _temMotoboy ? taxa : 0,
         'horarios': EditorHorarios.paraApi(_horarios),
       });
 
@@ -246,6 +265,21 @@ class _EditarMercadoState extends State<EditarMercado> {
               ),
               title: const Text('Tele-entrega (motoboy)'),
             ),
+            if (_temMotoboy) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _taxaController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Taxa de entrega (R\$)',
+                  helperText: 'Use 0 para entrega grátis.',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.monetization_on),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             const Row(
               children: [
