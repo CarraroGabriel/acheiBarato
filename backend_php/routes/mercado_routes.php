@@ -14,6 +14,11 @@ function tratarRotasMercado(string $metodo, array $rota): void
         return;
     }
 
+    if ($metodo === 'GET' && $idMercado !== null && $subrota === 'resumo') {
+        $controller->resumo($idMercado);
+        return;
+    }
+
     if ($idMercado !== null && $subrota === 'avaliacao') {
         match ($metodo) {
             'GET' => $controller->consultarAvaliacao($idMercado),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/cadastro_mercado.dart';
 import 'package:achei_barato/telas/cadastro_usuario.dart';
+import 'package:achei_barato/telas/home_mercado.dart';
 import 'package:achei_barato/telas/home_usuario.dart';
-import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
 import 'package:achei_barato/widgets/tela_base.dart';
 
@@ -72,9 +72,9 @@ class _LoginState extends State<Login> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => PerfilMercado(
+            builder: (_) => HomeMercado(
               idMercado: _toInt(dados['id_mercado']),
-              modoLojista: true,
+              nomeMercado: (dados['nm_mercado'] ?? 'Mercado').toString(),
             ),
           ),
           (_) => false,
@@ -93,9 +93,8 @@ class _LoginState extends State<Login> {
 
   void _mostrarMensagem(String mensagem) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   void _trocarTipo(bool usuario) {
@@ -161,9 +160,7 @@ class _LoginState extends State<Login> {
                 decoration: InputDecoration(
                   labelText: _isUsuario ? 'Email' : 'CNPJ',
                   border: const OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    _isUsuario ? Icons.email : Icons.business,
-                  ),
+                  prefixIcon: Icon(_isUsuario ? Icons.email : Icons.business),
                 ),
               ),
               const SizedBox(height: 16),

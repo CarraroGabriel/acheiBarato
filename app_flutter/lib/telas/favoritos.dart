@@ -3,7 +3,7 @@ import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
-import 'package:achei_barato/widgets/bottomnav.dart';
+import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
@@ -113,7 +113,7 @@ class _FavoritosState extends State<Favoritos> {
         aoAlterarPerfil: (nome) => setState(() => _nomeUsuario = nome),
       ),
       body: _buildBody(),
-      bottomNavigationBar: BottomNav(
+      bottomNavigationBar: BottomNavUsuarios(
         indiceAtual: 2,
         idUsuario: widget.idUsuario,
         nomeUsuario: _nomeUsuario,

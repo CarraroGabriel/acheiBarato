@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
-import 'package:achei_barato/widgets/bottomnav.dart';
+import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
@@ -244,7 +244,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNav(
+      bottomNavigationBar: BottomNavUsuarios(
         indiceAtual: 0,
         idUsuario: widget.idUsuario,
         nomeUsuario: _nomeUsuario,

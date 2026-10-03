@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/ProdutoMercado.php';
 
 class Mercado
 {
@@ -68,6 +69,56 @@ class Mercado
             }
             throw $e;
         }
+    }
+
+    public function resumo(int $idMercado): ?array
+    {
+        $stmt = $this->conexao->prepare(
+            'SELECT nm_mercado, ds_foto_mercado, nu_avg_nota, nul_avaliacoes
+             FROM tb_mercado
+             WHERE id_mercado = :id_mercado'
+        );
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+        $mercado = $stmt->fetch();
+
+        if (!$mercado) {
+            return null;
+        }
+
+        $stmt = $this->conexao->prepare(
+            'SELECT COUNT(*) AS produtos_cadastrados,
+                    COUNT(*) FILTER (WHERE ' . ProdutoMercado::SQL_PROMOCAO_ATIVA . ') AS produtos_promocao,
+                    COUNT(*) FILTER (WHERE pm.fl_disponivel) AS produtos_disponiveis,
+                    COUNT(*) FILTER (WHERE NOT pm.fl_disponivel) AS produtos_indisponiveis,
+                    COUNT(*) FILTER (
+                        WHERE pm.fl_disponivel AND pm.nu_qtde <= :limite
+                    ) AS produtos_estoque_baixo
+             FROM tb_produto_mercado pm
+             WHERE pm.id_mercado = :id_mercado'
+        );
+        $stmt->bindValue(':limite', ProdutoMercado::LIMITE_ESTOQUE_BAIXO, PDO::PARAM_INT);
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+        $produtos = array_map('intval', $stmt->fetch());
+
+        $stmt = $this->conexao->prepare(
+            'SELECT COUNT(DISTINCT id_usuario) FROM tb_mercado_favorito WHERE id_mercado = :id_mercado'
+        );
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+        $favoritos = (int) $stmt->fetchColumn();
+
+        return array_merge(['nm_mercado' => $mercado['nm_mercado']], $produtos, [
+            'limite_estoque_baixo' => ProdutoMercado::LIMITE_ESTOQUE_BAIXO,
+            'nota_media' => (float) $mercado['nu_avg_nota'],
+            'quantidade_avaliacoes' => (int) $mercado['nul_avaliacoes'],
+            'quantidade_favoritos' => $favoritos,
+            'informacoes_faltantes' => [
+                'horario' => count($this->listarHorarios($idMercado)) === 0,
+                'foto' => trim((string) $mercado['ds_foto_mercado']) === '',
+            ],
+        ]);
     }
 
     public function inserir(array $dados): array

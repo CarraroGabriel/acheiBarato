@@ -40,6 +40,21 @@ class MercadoController
         }
     }
 
+    public function resumo(int $idMercado): void
+    {
+        try {
+            $resumo = $this->mercado->resumo($idMercado);
+
+            if ($resumo === null) {
+                Response::json(false, 'Mercado não encontrado.', null, 404);
+            }
+
+            Response::json(true, 'Resumo do mercado consultado com sucesso.', $resumo, 200);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao consultar o resumo do mercado.', null, 500);
+        }
+    }
+
     public function listarPromocoes(int $idMercado): void
     {
         try {

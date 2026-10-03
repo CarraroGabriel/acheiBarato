@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/telas/favoritos.dart';
 import 'package:achei_barato/telas/home_usuario.dart';
 
-class BottomNav extends StatelessWidget {
+class BottomNavUsuarios extends StatelessWidget {
   final int indiceAtual;
   final int idUsuario;
   final String nomeUsuario;
 
-  const BottomNav({
+  const BottomNavUsuarios({
     super.key,
     required this.indiceAtual,
     required this.idUsuario,

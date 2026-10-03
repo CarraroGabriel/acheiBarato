@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
-import 'package:achei_barato/telas/edita_produto.dart';
-import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/horario_funcionamento.dart';
-import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class PerfilMercado extends StatefulWidget {
   final int idMercado;
   final int? idUsuario;
-  final bool modoLojista;
 
-  const PerfilMercado({
-    super.key,
-    required this.idMercado,
-    this.idUsuario,
-    this.modoLojista = false,
-  });
+  const PerfilMercado({super.key, required this.idMercado, this.idUsuario});
 
   @override
   State<PerfilMercado> createState() => _PerfilMercadoState();
@@ -33,7 +24,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
   int? _minhaNota;
   bool _enviandoAvaliacao = false;
 
-  bool get _podeFavoritar => !widget.modoLojista && widget.idUsuario != null;
+  bool get _podeFavoritar => widget.idUsuario != null;
 
   @override
   void initState() {
@@ -61,9 +52,8 @@ class _PerfilMercadoState extends State<PerfilMercado> {
 
       setState(() {
         _mercado = Map<String, dynamic>.from(resultados[0]['dados'] as Map);
-        _produtos = widget.modoLojista
-            ? produtos
-            : produtos.where((p) => _toBool(p['fl_disponivel'])).toList();
+        // O cliente só vê o que está disponível.
+        _produtos = produtos.where((p) => _toBool(p['fl_disponivel'])).toList();
       });
     } on ApiException catch (e) {
       if (mounted) setState(() => _erro = e.mensagem);
@@ -218,40 +208,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AcheiBaratoAppBar(
-        exibirBotaoVoltar: !widget.modoLojista,
-        exibirMenu: widget.modoLojista,
-      ),
-      drawer: widget.modoLojista
-          ? MenuLateral(
-              nome: (_mercado?['nm_mercado'] ?? 'Mercado').toString(),
-              id: widget.idMercado,
-              isUsuario: false,
-              aoAlterarPerfil: (_) => _carregarDados(),
-            )
-          : null,
-      floatingActionButton: widget.modoLojista
-          ? FloatingActionButton.extended(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              onPressed: () async {
-                final alterou = await Navigator.push<bool>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        RegistroProduto(idMercado: widget.idMercado),
-                  ),
-                );
-
-                if (alterou == true) _carregarDados();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Produto'),
-            )
-          : null,
-      body: _buildBody(),
-    );
+    return Scaffold(appBar: const AcheiBaratoAppBar(), body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -434,30 +391,22 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                 ),
               ),
             ),
-            if (!widget.modoLojista) ...[
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: HorarioFuncionamento(horarios: mercado['horarios']),
-              ),
-            ],
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: HorarioFuncionamento(horarios: mercado['horarios']),
+            ),
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
-                      Icon(
-                        widget.modoLojista
-                            ? Icons.inventory_2
-                            : Icons.shopping_basket,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.shopping_basket, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Produtos do Mercado',
                         style: TextStyle(
                           fontSize: 18,
@@ -468,11 +417,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   ),
                   const SizedBox(height: 12),
                   if (_produtos.isEmpty)
-                    Text(
-                      widget.modoLojista
-                          ? 'Nenhum produto cadastrado ainda.'
-                          : 'Nenhum produto disponível no momento.',
-                    )
+                    const Text('Nenhum produto disponível no momento.')
                   else
                     ..._produtos.map(_buildCardProduto),
                 ],
@@ -512,7 +457,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
   }
 
   Widget _buildCardProduto(Map<String, dynamic> produto) {
-    final conteudo = Container(
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
@@ -548,13 +493,6 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   '${produto['nm_marca'] ?? ''} • ${produto['ds_categoria'] ?? ''}',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-                if (widget.modoLojista) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Estoque: ${produto['nu_qtde'] ?? 0} • ${_toBool(produto['fl_disponivel']) ? 'Disponível' : 'Indisponível'}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  ),
-                ],
               ],
             ),
           ),
@@ -580,46 +518,15 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                   color: Colors.red,
                 ),
               ),
-              if (widget.modoLojista &&
-                  _toBool(produto['fl_promocao']) &&
-                  _toInt(produto['nu_desconto']) > 0)
-                Text(
-                  'Base: ${_formatarValor(produto['nu_valor'])} • -${_toInt(produto['nu_desconto'])}%',
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                ),
               if (_toBool(produto['fl_promocao']))
                 TempoPromocao(
                   segundosRestantes: produto['nu_segundos_restantes'],
                   tamanhoFonte: 10,
                 ),
-              if (widget.modoLojista &&
-                  _toBool(produto['fl_promocao_expirada']))
-                Text(
-                  'Promoção expirada',
-                  style: TextStyle(fontSize: 10, color: Colors.orange.shade800),
-                ),
             ],
           ),
         ],
       ),
-    );
-
-    if (!widget.modoLojista) return conteudo;
-
-    return GestureDetector(
-      onTap: () async {
-        final alterou = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => EdicaoProduto(
-              idProdutoMercado: _toInt(produto['id_produto_mercado']),
-            ),
-          ),
-        );
-
-        if (alterou == true) _carregarDados();
-      },
-      child: conteudo,
     );
   }
 

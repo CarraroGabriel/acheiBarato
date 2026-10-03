@@ -4,6 +4,9 @@ require_once __DIR__ . '/../config/Database.php';
 
 class ProdutoMercado
 {
+    // Regra do projeto: produto disponível com até 5 unidades está com estoque baixo.
+    public const LIMITE_ESTOQUE_BAIXO = 5;
+
     public const SQL_PROMOCAO_ATIVA =
         '(pm.fl_promocao AND (pm.dt_fim_promocao IS NULL OR pm.dt_fim_promocao > NOW()))';
 
@@ -22,10 +25,11 @@ class ProdutoMercado
 
     private const SELECT_BASE = 'SELECT pm.id_produto_mercado, pm.id_item_produto, pm.id_mercado,
                        ip.id_produto, ip.nm_produto, ip.nm_tipo, ip.nm_marca,
-                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto,
+                       ip.id_categoria, ip.nm_categoria AS ds_categoria, ip.ds_foto_produto,
                        ip.nu_medida, ip.sg_unidade, ip.ds_item_produto,
                        m.nm_mercado,
                        pm.nu_valor, pm.nu_qtde, pm.fl_disponivel,
+                       (pm.fl_disponivel AND pm.nu_qtde <= ' . self::LIMITE_ESTOQUE_BAIXO . ') AS fl_estoque_baixo,
                        pm.dt_atualizacao, '
                        . self::SQL_CAMPOS_PROMOCAO . '
                 FROM tb_produto_mercado pm
@@ -48,8 +52,8 @@ class ProdutoMercado
             $sql .= ' WHERE pm.id_mercado = :id_mercado';
         }
 
-        // Produtos em promoção ocupam o topo da lista.
-        $sql .= ' ORDER BY ' . self::SQL_PROMOCAO_ATIVA . ' DESC, ip.ds_item_produto, ip.nm_marca';
+        $sql .= ' ORDER BY ' . self::SQL_PROMOCAO_ATIVA . ' DESC,
+                  ip.nm_categoria, ip.ds_item_produto, ip.nm_marca';
 
         $stmt = $this->conexao->prepare($sql);
 
