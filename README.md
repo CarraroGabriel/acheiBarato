@@ -17,17 +17,17 @@ Com ele, o usuário consegue comparar preços entre estabelecimentos, montar uma
 ### Para o Usuário
 - **Cadastro e login** de clientes
 - **Busca de produtos** com comparação de preços entre mercados
-- **Carrinho Inteligente** *(adição futura)* — sugere em qual mercado comprar cada item com base no menor preço
 - **Favoritos** — permite monitorar produtos de interesse e acompanhar variações de preço
 - **Visualização de promoções do dia** na tela principal
 - **Detalhes do mercado** — endereço e informações sobre tele-entrega
+> **Carrinho Inteligente** não faz parte do escopo do TCC e fica como adição futura ao App. — sugere em qual mercado comprar cada item com base no menor preço
 
 ### Para o Lojista
 - **Cadastro do estabelecimento**
 - **Gestão de inventário** — atualização de preços, registro de promoções e indicação de disponibilidade de estoque
 - **Painel do lojista** — tela dedicada para gerenciar produtos e ofertas
 
-> 🔧 **Geolocalização** (cálculo de distância entre o usuário e os mercados) está prevista para implementação no próximo semestre, na disciplina de Programação para Dispositivos Móveis II.
+> 🔧 **Geolocalização** (cálculo de distância entre o usuário e os mercados) está prevista para implementação até o fim do mês de Outubro de 2026.
 
 > 🛒 **Carrinho Inteligente / Pedidos** não faz parte do escopo do TCC e fica como adição futura ao App. A aba **Pedidos** já aparece na navegação, mas apenas informa que a funcionalidade virá em uma versão futura.
 
