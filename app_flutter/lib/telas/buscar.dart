@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
+import 'package:achei_barato/telas/produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
@@ -220,10 +221,12 @@ class _BuscarState extends State<Buscar> with SingleTickerProviderStateMixin {
   }
 
   void _abrirProduto(int idItemProduto) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'A tela de comparação do produto será integrada em uma etapa específica.',
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProdutoTela(
+          idItemProduto: idItemProduto,
+          idUsuario: widget.idUsuario,
         ),
       ),
     );

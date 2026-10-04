@@ -18,6 +18,7 @@ require_once __DIR__ . '/../routes/produto_mercado_routes.php';
 require_once __DIR__ . '/../routes/login_routes.php';
 require_once __DIR__ . '/../routes/promocao_routes.php';
 require_once __DIR__ . '/../routes/mercado_favorito_routes.php';
+require_once __DIR__ . '/../routes/produto_favorito_routes.php';
 require_once __DIR__ . '/../routes/favorito_routes.php';
 require_once __DIR__ . '/../routes/catalogo_routes.php';
 
@@ -40,6 +41,7 @@ $rotasPrincipais = [
     'login',
     'promocoes',
     'mercado_favorito',
+    'produto_favorito',
     'favoritos',
     'categorias',
     'marcas',
@@ -86,6 +88,9 @@ switch ($rotaPrincipal) {
         break;
     case 'mercado_favorito':
         tratarRotaMercadoFavorito($metodo);
+        break;
+    case 'produto_favorito':
+        tratarRotaProdutoFavorito($metodo);
         break;
     case 'favoritos':
         tratarRotaFavorito($metodo, $rotaTratada);

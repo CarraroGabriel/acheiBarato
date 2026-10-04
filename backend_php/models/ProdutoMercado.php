@@ -11,7 +11,6 @@ class ProdutoMercado
     public const SQL_PROMOCAO_ATIVA =
         '(pm.fl_promocao AND (pm.dt_fim_promocao IS NULL OR pm.dt_fim_promocao > NOW()))';
 
-    // Preço que o cliente paga: com desconto só enquanto a promoção estiver ativa.
     public const SQL_VALOR_FINAL =
         '(CASE WHEN ' . self::SQL_PROMOCAO_ATIVA . '
               THEN ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2)
@@ -258,6 +257,103 @@ class ProdutoMercado
         return '(' . Busca::semAcento('ip.ds_item_produto') . " LIKE "
             . Busca::semAcento(':inicio') . " || '%') DESC,
                 qt_mercados DESC, ip.ds_item_produto";
+    }
+
+    public function compararItem(int $idItemProduto): ?array
+    {
+        $stmt = $this->conexao->prepare(
+            'SELECT id_item_produto, id_produto, ds_item_produto, nm_produto, nm_tipo,
+                    nm_marca, nm_categoria, nu_medida, sg_unidade, ds_foto_produto
+             FROM vw_item_produto
+             WHERE id_item_produto = :id_item_produto'
+        );
+        $stmt->bindValue(':id_item_produto', $idItemProduto, PDO::PARAM_INT);
+        $stmt->execute();
+        $item = $stmt->fetch();
+
+        if (!$item) {
+            return null;
+        }
+
+        $stmt = $this->conexao->prepare(
+            'SELECT pm.id_produto_mercado, m.id_mercado, m.nm_mercado, m.ds_foto_mercado,
+                    m.nu_latitude, m.nu_longitude, m.fl_motoboy, m.nu_taxa_entrega,
+                    pm.nu_valor, pm.fl_disponivel, ' . self::SQL_CAMPOS_PROMOCAO . '
+             FROM tb_produto_mercado pm
+             INNER JOIN tb_mercado m ON m.id_mercado = pm.id_mercado
+             WHERE pm.id_item_produto = :id_item_produto
+               AND pm.fl_disponivel = TRUE
+             ORDER BY nu_valor_final, m.nm_mercado'
+        );
+        $stmt->bindValue(':id_item_produto', $idItemProduto, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $mercados = array_map(fn(array $m) => [
+            'id_produto_mercado' => (int) $m['id_produto_mercado'],
+            'id_mercado' => (int) $m['id_mercado'],
+            'nm_mercado' => $m['nm_mercado'],
+            'ds_foto_mercado' => $m['ds_foto_mercado'],
+            'nu_latitude' => (float) $m['nu_latitude'],
+            'nu_longitude' => (float) $m['nu_longitude'],
+            'fl_motoboy' => self::paraBool($m['fl_motoboy']),
+            'nu_taxa_entrega' => (float) $m['nu_taxa_entrega'],
+            'nu_valor' => (float) $m['nu_valor'],
+            'nu_valor_final' => (float) $m['nu_valor_final'],
+            'nu_desconto' => (int) $m['nu_desconto'],
+            'fl_promocao' => self::paraBool($m['fl_promocao']),
+            'nu_segundos_restantes' => $m['nu_segundos_restantes'] === null
+                ? null
+                : (int) $m['nu_segundos_restantes'],
+            'fl_disponivel' => self::paraBool($m['fl_disponivel']),
+        ], $stmt->fetchAll());
+
+        $mercados = self::marcarMelhorPreco($mercados);
+
+        return [
+            'item' => $item,
+            'nu_menor_preco' => $mercados ? $mercados[0]['nu_valor_final'] : null,
+            'mercados' => $mercados,
+        ];
+    }
+
+    public static function marcarMelhorPreco(array $ofertas): array
+    {
+        $menor = null;
+
+        foreach ($ofertas as $oferta) {
+            if (!$oferta['fl_disponivel']) {
+                continue;
+            }
+            // Compara em centavos para evitar erro de arredondamento de float.
+            $centavos = (int) round($oferta['nu_valor_final'] * 100);
+            if ($menor === null || $centavos < $menor) {
+                $menor = $centavos;
+            }
+        }
+
+        foreach ($ofertas as &$oferta) {
+            $oferta['melhor_preco'] = $menor !== null
+                && $oferta['fl_disponivel']
+                && (int) round($oferta['nu_valor_final'] * 100) === $menor;
+        }
+        unset($oferta);
+
+        usort($ofertas, function (array $a, array $b): int {
+            if ($a['fl_disponivel'] !== $b['fl_disponivel']) {
+                return $a['fl_disponivel'] ? -1 : 1;
+            }
+            return $a['nu_valor_final'] <=> $b['nu_valor_final'];
+        });
+
+        return $ofertas;
+    }
+
+    private static function paraBool(mixed $valor): bool
+    {
+        if (is_bool($valor)) {
+            return $valor;
+        }
+        return in_array(strtolower((string) $valor), ['t', 'true', '1'], true);
     }
 
     public function listarPromocoes(?int $idMercado = null, ?int $idUsuario = null): array

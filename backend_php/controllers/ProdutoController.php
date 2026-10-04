@@ -58,6 +58,21 @@ class ProdutoController
         }
     }
 
+    public function compararItem(int $idItemProduto): void
+    {
+        try {
+            $comparacao = (new ProdutoMercado())->compararItem($idItemProduto);
+
+            if ($comparacao === null) {
+                Response::json(false, 'Produto não encontrado.', null, 404);
+            }
+
+            Response::json(true, 'Comparação de preços consultada.', $comparacao, 200);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao consultar o produto.', null, 500);
+        }
+    }
+
     private function lerInteiro(string $campo): ?int
     {
         $valor = trim((string) ($_GET[$campo] ?? ''));

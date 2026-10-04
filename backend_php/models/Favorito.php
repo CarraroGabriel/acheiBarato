@@ -130,42 +130,11 @@ class Favorito
         }
 
         foreach ($produtos as &$produto) {
-            $produto['mercados'] = $this->marcarMelhorPreco($produto['mercados']);
+            $produto['mercados'] = ProdutoMercado::marcarMelhorPreco($produto['mercados']);
         }
         unset($produto);
 
         return array_values($produtos);
-    }
-
-    private function marcarMelhorPreco(array $mercados): array
-    {
-        $menor = null;
-
-        foreach ($mercados as $m) {
-            if (!$m['fl_disponivel']) {
-                continue;
-            }
-            $centavos = (int) round($m['nu_valor_final'] * 100);
-            if ($menor === null || $centavos < $menor) {
-                $menor = $centavos;
-            }
-        }
-
-        foreach ($mercados as &$m) {
-            $m['melhor_preco'] = $menor !== null
-                && $m['fl_disponivel']
-                && (int) round($m['nu_valor_final'] * 100) === $menor;
-        }
-        unset($m);
-
-        usort($mercados, function (array $a, array $b): int {
-            if ($a['fl_disponivel'] !== $b['fl_disponivel']) {
-                return $a['fl_disponivel'] ? -1 : 1;
-            }
-            return $a['nu_valor_final'] <=> $b['nu_valor_final'];
-        });
-
-        return $mercados;
     }
 
     private function horariosPorMercado(array $idsMercado): array

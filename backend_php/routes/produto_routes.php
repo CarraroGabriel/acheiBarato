@@ -15,6 +15,14 @@ function tratarRotasProduto(string $metodo, array $rota): void
         $controller->buscar();
         return;
     }
+    
+    if (($rota[1] ?? null) === 'item') {
+        if (!isset($rota[2]) || !ctype_digit((string) $rota[2])) {
+            Response::json(false, 'Informe o id do produto na URL.', null, 400);
+        }
+        $controller->compararItem((int) $rota[2]);
+        return;
+    }
 
     $idProduto = isset($rota[1]) && ctype_digit((string) $rota[1]) ? (int) $rota[1] : null;
 
