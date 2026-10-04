@@ -10,6 +10,12 @@ function tratarRotasProduto(string $metodo, array $rota): void
     }
 
     $controller = new ProdutoController();
+
+    if (($rota[1] ?? null) === 'busca') {
+        $controller->buscar();
+        return;
+    }
+
     $idProduto = isset($rota[1]) && ctype_digit((string) $rota[1]) ? (int) $rota[1] : null;
 
     $idProduto === null ? $controller->listar() : $controller->consultar($idProduto);

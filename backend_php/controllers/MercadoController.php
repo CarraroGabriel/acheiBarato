@@ -18,8 +18,20 @@ class MercadoController
 
     public function listar(): void
     {
+        $busca = trim((string) ($_GET['busca'] ?? ''));
+
+        if (strlen($busca) > 200) {
+            Response::json(false, 'Texto de busca muito longo.', null, 400);
+        }
+
+        $motoboy = match ($_GET['motoboy'] ?? '') {
+            'sim' => true,
+            'nao' => false,
+            default => null,
+        };
+
         try {
-            Response::json(true, 'Mercados encontrados.', $this->mercado->listar(), 200);
+            Response::json(true, 'Mercados encontrados.', $this->mercado->listar($busca, $motoboy), 200);
         } catch (Throwable $e) {
             Response::json(false, 'Erro ao consultar mercados.', null, 500);
         }

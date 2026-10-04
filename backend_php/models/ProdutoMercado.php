@@ -1,23 +1,28 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../helpers/Busca.php';
 
 class ProdutoMercado
 {
-    // Regra do projeto: produto disponível com até 5 unidades está com estoque baixo.
+    // produto disponível com até 5 unidades está com estoque baixo.
     public const LIMITE_ESTOQUE_BAIXO = 5;
 
     public const SQL_PROMOCAO_ATIVA =
         '(pm.fl_promocao AND (pm.dt_fim_promocao IS NULL OR pm.dt_fim_promocao > NOW()))';
 
+    // Preço que o cliente paga: com desconto só enquanto a promoção estiver ativa.
+    public const SQL_VALOR_FINAL =
+        '(CASE WHEN ' . self::SQL_PROMOCAO_ATIVA . '
+              THEN ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2)
+              ELSE pm.nu_valor
+         END)';
+
     public const SQL_CAMPOS_PROMOCAO =
         self::SQL_PROMOCAO_ATIVA . ' AS fl_promocao,
         COALESCE(pm.fl_promocao AND pm.dt_fim_promocao <= NOW(), FALSE) AS fl_promocao_expirada,
         pm.nu_desconto,
-        CASE WHEN ' . self::SQL_PROMOCAO_ATIVA . '
-             THEN ROUND(pm.nu_valor * (1 - pm.nu_desconto / 100.0), 2)
-             ELSE pm.nu_valor
-        END AS nu_valor_final,
+        ' . self::SQL_VALOR_FINAL . ' AS nu_valor_final,
         TO_CHAR(pm.dt_fim_promocao AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS"Z"\') AS dt_fim_promocao,
         CASE WHEN ' . self::SQL_PROMOCAO_ATIVA . ' AND pm.dt_fim_promocao IS NOT NULL
              THEN FLOOR(EXTRACT(EPOCH FROM pm.dt_fim_promocao - NOW()))::INTEGER
@@ -165,6 +170,94 @@ class ProdutoMercado
         $stmt->bindValue(':id_produto_mercado', $idProdutoMercado, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->rowCount() > 0;
+    }
+
+    public function buscarItens(array $filtros): array
+    {
+        $valorFinal = self::SQL_VALOR_FINAL;
+        $promocaoAtiva = self::SQL_PROMOCAO_ATIVA;
+
+        $where = ['pm.fl_disponivel = TRUE'];
+        $having = [];
+        $parametros = [];
+
+        $palavras = Busca::palavras($filtros['busca'] ?? null);
+
+        if ($palavras) {
+            [$condicao, $parametrosBusca] = Busca::condicao(
+                "ip.ds_item_produto || ' ' || ip.nm_marca",
+                $palavras,
+                'palavra'
+            );
+            $where[] = $condicao;
+            $parametros += $parametrosBusca;
+        }
+
+        if ($filtros['id_categoria'] !== null) {
+            $where[] = 'ip.id_categoria = :id_categoria';
+            $parametros[':id_categoria'] = $filtros['id_categoria'];
+        }
+
+        if ($filtros['id_marca'] !== null) {
+            $where[] = 'ip.id_marca = :id_marca';
+            $parametros[':id_marca'] = $filtros['id_marca'];
+        }
+
+        if ($filtros['promocao'] === 'sim') {
+            $having[] = "BOOL_OR({$promocaoAtiva})";
+        } elseif ($filtros['promocao'] === 'nao') {
+            $having[] = "NOT BOOL_OR({$promocaoAtiva})";
+        }
+
+        if ($filtros['preco_min'] !== null) {
+            $having[] = "MIN({$valorFinal}) >= :preco_min";
+            $parametros[':preco_min'] = $filtros['preco_min'];
+        }
+
+        if ($filtros['preco_max'] !== null) {
+            $having[] = "MIN({$valorFinal}) <= :preco_max";
+            $parametros[':preco_max'] = $filtros['preco_max'];
+        }
+
+        $ordem = match ($filtros['ordem']) {
+            'menor_preco' => 'nu_menor_preco ASC, ip.ds_item_produto',
+            'maior_preco' => 'nu_menor_preco DESC, ip.ds_item_produto',
+            'nome' => 'ip.ds_item_produto, ip.nm_marca',
+            default => $this->ordemRelevancia($palavras, $parametros),
+        };
+
+        $sql = "SELECT ip.id_item_produto, ip.id_produto, ip.ds_item_produto, ip.nm_marca,
+                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto,
+                       MIN({$valorFinal}) AS nu_menor_preco,
+                       COUNT(DISTINCT pm.id_mercado) AS qt_mercados,
+                       BOOL_OR({$promocaoAtiva}) AS fl_promocao
+                FROM vw_item_produto ip
+                INNER JOIN tb_produto_mercado pm ON pm.id_item_produto = ip.id_item_produto
+                WHERE " . implode(' AND ', $where) . '
+                GROUP BY ip.id_item_produto, ip.id_produto, ip.ds_item_produto, ip.nm_marca,
+                         ip.nm_categoria, ip.ds_foto_produto'
+                . ($having ? ' HAVING ' . implode(' AND ', $having) : '') . "
+                ORDER BY {$ordem}
+                LIMIT 100";
+
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->execute($parametros);
+        return $stmt->fetchAll();
+    }
+
+    // Relevância simples: itens que começam com a primeira palavra buscada,
+    // depois os vendidos em mais mercados, depois por nome.
+    private function ordemRelevancia(array $palavras, array &$parametros): string
+    {
+        if (!$palavras) {
+            return 'qt_mercados DESC, ip.ds_item_produto';
+        }
+
+        $parametros[':inicio'] = Busca::escaparLike($palavras[0]);
+
+        return '(' . Busca::semAcento('ip.ds_item_produto') . " LIKE "
+            . Busca::semAcento(':inicio') . " || '%') DESC,
+                qt_mercados DESC, ip.ds_item_produto";
     }
 
     public function listarPromocoes(?int $idMercado = null, ?int $idUsuario = null): array

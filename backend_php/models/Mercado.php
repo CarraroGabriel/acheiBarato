@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/ProdutoMercado.php';
+require_once __DIR__ . '/../helpers/Busca.php';
 
 class Mercado
 {
@@ -13,16 +14,37 @@ class Mercado
         $this->conexao = $database->conectar();
     }
 
-    public function listar(): array
+    public function listar(?string $busca = null, ?bool $motoboy = null): array
     {
-        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
-                       fl_motoboy, nu_taxa_entrega, ds_foto_mercado, nu_latitude, nu_longitude,
-                       nu_avg_nota, nul_avaliacoes
-                FROM tb_mercado
-                ORDER BY nm_mercado';
+        $where = [];
+        $parametros = [];
+
+        $palavras = Busca::palavras($busca);
+
+        if ($palavras) {
+            [$condicao, $parametrosBusca] = Busca::condicao('m.nm_mercado', $palavras, 'palavra');
+            $where[] = $condicao;
+            $parametros += $parametrosBusca;
+        }
+
+        if ($motoboy !== null) {
+            $where[] = $motoboy ? 'm.fl_motoboy = TRUE' : 'm.fl_motoboy = FALSE';
+        }
+
+        $sql = 'SELECT m.id_mercado, m.nu_cnpj, m.nm_mercado, m.ds_email, m.nu_cep, m.nm_endereco,
+                       m.fl_motoboy, m.nu_taxa_entrega, m.ds_foto_mercado, m.nu_latitude, m.nu_longitude,
+                       m.nu_avg_nota, m.nul_avaliacoes,
+                       (SELECT COUNT(*)
+                          FROM tb_produto_mercado pm
+                         WHERE pm.id_mercado = m.id_mercado
+                           AND pm.fl_disponivel = TRUE
+                           AND ' . ProdutoMercado::SQL_PROMOCAO_ATIVA . ') AS qt_promocoes
+                FROM tb_mercado m'
+                . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . '
+                ORDER BY m.nm_mercado';
 
         $stmt = $this->conexao->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($parametros);
         return $stmt->fetchAll();
     }
 

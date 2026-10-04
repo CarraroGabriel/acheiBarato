@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:achei_barato/telas/buscar.dart';
 import 'package:achei_barato/telas/favoritos.dart';
 import 'package:achei_barato/telas/home_usuario.dart';
 
@@ -24,6 +25,12 @@ class BottomNavUsuarios extends StatelessWidget {
           HomeUsuario(idUsuario: idUsuario, nomeUsuario: nomeUsuario),
         );
         break;
+      case 1:
+        _trocarTela(
+          context,
+          Buscar(idUsuario: idUsuario, nomeUsuario: nomeUsuario),
+        );
+        break;
       case 2:
         _trocarTela(
           context,
@@ -33,7 +40,9 @@ class BottomNavUsuarios extends StatelessWidget {
       case 3:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Pedidos será uma funcionalidade futura do Achei Barato.'),
+            content: Text(
+              'Pedidos será uma funcionalidade futura do Achei Barato.',
+            ),
           ),
         );
         break;
