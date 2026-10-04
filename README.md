@@ -8,40 +8,61 @@ Aplicativo mobile comparador de preços de mercados regionais, desenvolvido como
 
 O app foi pensado especialmente para **jovens adultos** que estão começando a morar sozinhos e precisam controlar os gastos, e para **idosos** que buscam praticidade para encontrar produtos próximos sem grandes deslocamentos.
 
-Com ele, o usuário consegue comparar preços entre estabelecimentos, montar uma lista de compras e receber sugestões inteligentes de onde comprar cada item para gastar menos.
+Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo produto entre os mercados, acompanhar promoções e descobrir onde comprar cada item para gastar menos.
 
 ---
 
-## ✅ Funcionalidades Previstas
+## ✅ Funcionalidades
 
 ### Para o Usuário
 - **Cadastro e login** de clientes
-- **Busca de produtos** com comparação de preços entre mercados
-- **Favoritos** — permite monitorar produtos de interesse e acompanhar variações de preço
-- **Visualização de promoções do dia** na tela principal
-- **Detalhes do mercado** — endereço e informações sobre tele-entrega
-> **Carrinho Inteligente** não faz parte do escopo do TCC e fica como adição futura ao App. — sugere em qual mercado comprar cada item com base no menor preço
+- **Busca de produtos** com filtros por categoria, marca, faixa de preço e promoção, e ordenação por relevância, menor preço, maior preço ou nome
+- **Comparação de preços** — tela do produto com todos os mercados que o vendem, do menor para o maior preço, destacando o **melhor preço**, a promoção e a tele-entrega de cada um
+- **Busca de mercados** com filtros por distância (raio), tele-entrega, avaliação mínima e mercados com promoções
+- **Promoções em destaque** na tela principal, com as dos mercados favoritos primeiro
+- **Tempo restante da promoção** — contagem regressiva ("Termina em 2h 35min") quando o mercado define um prazo
+- **Favoritos** — mercados e produtos favoritos, com indicação de melhor preço entre os mercados
+- **Detalhes do mercado** — endereço, tele-entrega e taxa de entrega, horário de funcionamento (com "aberto agora"), nota média e produtos disponíveis
+- **Avaliação de mercados** — nota de 1 a 5 estrelas (uma por usuário, podendo ser alterada)
+- **Perfil** — edição de nome e e-mail e exclusão da conta
+- **Distância até os mercados** calculada pela localização do celular, quando o usuário permite
 
 ### Para o Lojista
 - **Cadastro do estabelecimento**
-- **Gestão de inventário** — atualização de preços, registro de promoções e indicação de disponibilidade de estoque
-- **Painel do lojista** — tela dedicada para gerenciar produtos e ofertas
+- **Painel do lojista** — visão geral com produtos cadastrados, em promoção, disponíveis, com estoque baixo e indisponíveis, nota média, quantidade de favoritos e avisos de informações faltando (horário e foto)
+- **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria
+- **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes
+- **Edição de produto** — preço, estoque, disponibilidade e promoção com percentual de desconto e prazo de término
+- **Perfil do mercado** — nome, e-mail, endereço/CEP, tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
 
-> 🔧 **Geolocalização** (cálculo de distância entre o usuário e os mercados) está prevista para implementação até o fim do mês de Outubro de 2026.
-
-> 🛒 **Carrinho Inteligente / Pedidos** não faz parte do escopo do TCC e fica como adição futura ao App. A aba **Pedidos** já aparece na navegação, mas apenas informa que a funcionalidade virá em uma versão futura.
+> 🔧 **Geolocalização** (mapa na tela principal e coordenadas dos mercados para o cálculo de distância) está prevista para implementação até o fim do mês de Outubro de 2026.
 
 ---
 
-## 🖥️ Telas Planejadas
+## 🔮 Adições Futuras (fora do escopo do TCC)
 
-| Tela | Descrição |
-|---|---|
-| Login / Cadastro | Acesso para clientes e lojistas |
-| Tela Principal | Busca de produtos, mercados favoritos e promoções |
-| Carrinho / Sugestão *(adição futura)* | Lista de itens com indicação do melhor mercado para cada um |
-| Cadastro de Produtos (Lojista) | Painel para gerenciar preços e promoções |
-| Detalhes do Mercado | Endereço, distância e informações de entrega |
+- 🛒 **Carrinho Inteligente / Pedidos** — sugere em qual mercado comprar cada item com base no menor preço. A aba **Pedidos** já aparece na navegação, mas apenas informa que a funcionalidade virá em uma versão futura.
+- 📊 **Dashboard de vendas para os varejistas** — acompanhamento de vendas e desempenho dos produtos pelo lojista.
+- 🪪 **API de validação de CPF/CNPJ** — verificação dos documentos informados no cadastro de clientes e mercados.
+
+---
+
+## 🖥️ Telas
+
+| Tela | Descrição | Situação |
+|---|---|---|
+| Login / Cadastro | Acesso e cadastro de clientes e lojistas | ✅ Implementada |
+| Tela Principal (Usuário) | Mercados, promoções em destaque e menu lateral | ✅ Implementada (mapa previsto na geolocalização) |
+| Buscar | Pesquisa de produtos e mercados com filtros e ordenação | ✅ Implementada |
+| Produto / Comparação de Preços | Mercados que vendem o produto, melhor preço e favorito | ✅ Implementada |
+| Detalhes do Mercado | Endereço, horário, tele-entrega, avaliação e produtos | ✅ Implementada |
+| Favoritos | Mercados e produtos favoritos | ✅ Implementada |
+| Perfil do Usuário | Edição de nome e e-mail e exclusão da conta | ✅ Implementada |
+| Painel do Lojista | Visão geral, pendências e promoções atuais | ✅ Implementada |
+| Produtos do Mercado (Lojista) | Lista de produtos com filtros | ✅ Implementada |
+| Cadastro e Edição de Produtos (Lojista) | Cadastro pelo catálogo, preços, estoque e promoções | ✅ Implementada |
+| Perfil do Mercado (Lojista) | Dados do mercado, tele-entrega e horário de funcionamento | ✅ Implementada (foto em desenvolvimento) |
+| Carrinho / Pedidos *(adição futura)* | Lista de itens com indicação do melhor mercado para cada um | 🔮 Futura |
 
 ---
 
@@ -50,11 +71,19 @@ Com ele, o usuário consegue comparar preços entre estabelecimentos, montar uma
 | Camada | Tecnologia |
 |---|---|
 | Frontend / Mobile | [Flutter](https://flutter.dev) + Dart |
-| Backend | PHP |
+| Backend | PHP (API REST) |
 | Banco de Dados | PostgreSQL |
+| Localização | [geolocator](https://pub.dev/packages/geolocator) |
+| Notificações *(previsto)* | Firebase Cloud Messaging |
 
 ---
 
 ## 📌 Status do Projeto
 
-🚧 Em desenvolvimento — Projeto de TCC (Trabalho de Conclusão de Curso)
+🚧 **Em desenvolvimento** — Projeto de TCC (Trabalho de Conclusão de Curso)
+
+Atualmente está prevista a implementação de:
+
+- 📍 **Integração com geolocalização** — mapa na tela principal, localização do usuário e coordenadas dos mercados para exibir distâncias e filtrar mercados próximos
+- 🔔 **Notificações com Firebase** — aviso ao usuário quando um produto favoritado entrar em promoção (a relação de produtos favoritos já está pronta no banco)
+- 🖼️ **Fotos e imagens** — envio de fotos dos mercados e dos produtos (os campos já existem no banco; a forma de armazenamento está em definição)
