@@ -20,6 +20,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Comparação de preços** — tela do produto com todos os mercados que o vendem, do menor para o maior preço, destacando o **melhor preço**, a promoção e a tele-entrega de cada um
 - **Busca de mercados** com filtros por distância (raio), tele-entrega, avaliação mínima e mercados com promoções
 - **Promoções em destaque** na tela principal, com as dos mercados favoritos primeiro
+- **Mercado aberto ou fechado** nos cards da tela principal, de acordo com o horário de funcionamento
 - **Tempo restante da promoção** — contagem regressiva ("Termina em 2h 35min") quando o mercado define um prazo
 - **Favoritos** — mercados e produtos favoritos, com indicação de melhor preço entre os mercados
 - **Detalhes do mercado** — endereço, tele-entrega e taxa de entrega, horário de funcionamento (com "aberto agora"), nota média e produtos disponíveis
@@ -52,7 +53,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Tela | Descrição | Situação |
 |---|---|---|
 | Login / Cadastro | Acesso e cadastro de clientes e lojistas | ✅ Implementada |
-| Tela Principal (Usuário) | Mercados, promoções em destaque e menu lateral | ✅ Implementada (mapa previsto na geolocalização) |
+| Tela Principal (Usuário) | Mercados (com aberto/fechado), promoções em destaque e menu lateral | ✅ Implementada (mapa previsto na geolocalização) |
 | Buscar | Pesquisa de produtos e mercados com filtros e ordenação | ✅ Implementada |
 | Produto / Comparação de Preços | Mercados que vendem o produto, melhor preço e favorito | ✅ Implementada |
 | Detalhes do Mercado | Endereço, horário, tele-entrega, avaliação e produtos | ✅ Implementada |

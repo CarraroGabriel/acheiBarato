@@ -45,7 +45,16 @@ class Mercado
 
         $stmt = $this->conexao->prepare($sql);
         $stmt->execute($parametros);
-        return $stmt->fetchAll();
+        $mercados = $stmt->fetchAll();
+
+        $horarios = $this->horariosPorMercado(array_column($mercados, 'id_mercado'));
+
+        foreach ($mercados as &$mercado) {
+            $mercado['horarios'] = $horarios[(int) $mercado['id_mercado']] ?? [];
+        }
+        unset($mercado);
+
+        return $mercados;
     }
 
     public function consultarPorId(int $idMercado): ?array
@@ -72,18 +81,26 @@ class Mercado
 
     public function listarHorarios(int $idMercado): array
     {
-        $sql = 'SELECT nu_dia_semana,
-                       TO_CHAR(hr_abertura, \'HH24:MI\') AS hr_abertura,
-                       TO_CHAR(hr_fechamento, \'HH24:MI\') AS hr_fechamento
+        return $this->horariosPorMercado([$idMercado])[$idMercado] ?? [];
+    }
+
+    private function horariosPorMercado(array $idsMercado): array
+    {
+        if (!$idsMercado) {
+            return [];
+        }
+
+        $lista = implode(',', array_map('intval', $idsMercado));
+
+        $sql = "SELECT id_mercado, nu_dia_semana,
+                       TO_CHAR(hr_abertura, 'HH24:MI') AS hr_abertura,
+                       TO_CHAR(hr_fechamento, 'HH24:MI') AS hr_fechamento
                 FROM tb_horario_mercado
-                WHERE id_mercado = :id_mercado
-                ORDER BY nu_dia_semana, hr_abertura';
+                WHERE id_mercado IN ({$lista})
+                ORDER BY id_mercado, nu_dia_semana, hr_abertura";
 
         try {
-            $stmt = $this->conexao->prepare($sql);
-            $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll();
+            $linhas = $this->conexao->query($sql)->fetchAll();
         } catch (PDOException $e) {
             // 42P01 = tabela inexistente (migração de horários ainda não aplicada).
             if ($e->getCode() === '42P01') {
@@ -91,6 +108,17 @@ class Mercado
             }
             throw $e;
         }
+
+        $resultado = [];
+        foreach ($linhas as $linha) {
+            $resultado[(int) $linha['id_mercado']][] = [
+                'nu_dia_semana' => (int) $linha['nu_dia_semana'],
+                'hr_abertura' => $linha['hr_abertura'],
+                'hr_fechamento' => $linha['hr_fechamento'],
+            ];
+        }
+
+        return $resultado;
     }
 
     public function resumo(int $idMercado): ?array

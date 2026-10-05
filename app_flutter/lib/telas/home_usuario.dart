@@ -3,6 +3,7 @@ import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
+import 'package:achei_barato/widgets/editor_horarios.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
@@ -185,7 +186,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                         const Text('Nenhum mercado cadastrado.')
                       else
                         SizedBox(
-                          height: 140,
+                          height: 160,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: _mercados.length,
@@ -268,6 +269,38 @@ class _HomeUsuarioState extends State<HomeUsuario> {
     );
   }
 
+  // "Aberto" / "Fechado" pelo horário do aparelho; sem horário cadastrado, avisa.
+  Widget _buildSituacaoMercado(Map<String, dynamic> mercado) {
+    final aberto = EditorHorarios.estaAberto(
+      EditorHorarios.lerDaApi(mercado['horarios']),
+    );
+
+    final (texto, cor) = switch (aberto) {
+      true => ('Aberto', Colors.green.shade700),
+      false => ('Fechado', Colors.red.shade700),
+      null => ('Horário não informado', Colors.grey.shade500),
+    };
+
+    return Row(
+      children: [
+        Icon(Icons.circle, size: 8, color: cor),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            texto,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              color: cor,
+              fontWeight: aberto == null ? FontWeight.normal : FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCardMercado(Map<String, dynamic> mercado) {
     return GestureDetector(
       onTap: () async {
@@ -318,6 +351,8 @@ class _HomeUsuarioState extends State<HomeUsuario> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 4),
+            _buildSituacaoMercado(mercado),
             const SizedBox(height: 4),
             Row(
               children: [

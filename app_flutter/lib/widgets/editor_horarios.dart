@@ -72,6 +72,23 @@ class EditorHorarios extends StatelessWidget {
     return null;
   }
 
+  static bool? estaAberto(
+    Map<int, List<FaixaHorario>> horarios, [
+    DateTime? momento,
+  ]) {
+    if (horarios.isEmpty) return null;
+
+    final agora = momento ?? DateTime.now();
+    final hoje = agora.weekday % 7; // DateTime: 7 = domingo; banco: 0 = domingo
+    final minutoAtual = agora.hour * 60 + agora.minute;
+
+    return (horarios[hoje] ?? []).any(
+      (f) =>
+          minutoAtual >= _minutos(f.abertura) &&
+          minutoAtual < _minutos(f.fechamento),
+    );
+  }
+
   static String formatar(TimeOfDay hora) =>
       '${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}';
 

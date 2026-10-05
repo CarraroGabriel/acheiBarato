@@ -9,15 +9,9 @@ class HorarioFuncionamento extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final porDia = EditorHorarios.lerDaApi(horarios);
-    final agora = DateTime.now();
-    final hoje = agora.weekday % 7; // DateTime: 7 = domingo; banco: 0 = domingo
-    final minutoAtual = agora.hour * 60 + agora.minute;
-
-    final abertoAgora = (porDia[hoje] ?? []).any(
-      (f) =>
-          minutoAtual >= f.abertura.hour * 60 + f.abertura.minute &&
-          minutoAtual < f.fechamento.hour * 60 + f.fechamento.minute,
-    );
+    final hoje =
+        DateTime.now().weekday % 7; // DateTime: 7 = domingo; banco: 0 = domingo
+    final abertoAgora = EditorHorarios.estaAberto(porDia) ?? false;
 
     return Container(
       decoration: BoxDecoration(
