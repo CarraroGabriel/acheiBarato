@@ -3,11 +3,11 @@ import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/edita_produto.dart';
 import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/bottomnav_mercado.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
-// Situações usadas para filtrar a lista (e pelos atalhos da home do mercado).
 enum FiltroProdutos {
   todos('Todos', 'Este mercado ainda não possui produtos cadastrados.'),
   promocao('Em promoção', 'Nenhum produto em promoção.'),
@@ -40,7 +40,7 @@ class ProdutosMercado extends StatefulWidget {
 class _ProdutosMercadoState extends State<ProdutosMercado> {
   late String _nomeMercado = widget.nomeMercado;
   late FiltroProdutos _filtro = widget.filtroInicial;
-  int? _idCategoria; // null = todas as categorias
+  int? _idCategoria;
 
   List<Map<String, dynamic>> _produtos = [];
   List<Map<String, dynamic>> _categorias = [];
@@ -110,7 +110,7 @@ class _ProdutosMercadoState extends State<ProdutosMercado> {
   }
 
   Future<void> _editarProduto(Map<String, dynamic> produto) async {
-    final alterou = await Navigator.push<bool>(
+    await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => EdicaoProduto(
@@ -118,7 +118,7 @@ class _ProdutosMercadoState extends State<ProdutosMercado> {
         ),
       ),
     );
-    if (alterou == true) _carregar();
+    if (mounted) _carregar();
   }
 
   @override
@@ -281,7 +281,6 @@ class _ProdutosMercadoState extends State<ProdutosMercado> {
   }
 
   Widget _buildCardProduto(Map<String, dynamic> produto) {
-    final foto = (produto['ds_foto_produto'] ?? '').toString();
     final disponivel = _toBool(produto['fl_disponivel']);
     final promocao = _toBool(produto['fl_promocao']);
     final estoqueBaixo = _toBool(produto['fl_estoque_baixo']);
@@ -306,14 +305,7 @@ class _ProdutosMercadoState extends State<ProdutosMercado> {
                 width: 64,
                 height: 64,
                 color: Colors.grey.shade200,
-                child: foto.isNotEmpty
-                    ? Image.network(
-                        foto,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            const Icon(Icons.image, color: Colors.grey),
-                      )
-                    : const Icon(Icons.image, color: Colors.grey, size: 30),
+                child: ImagemApp.produto(produto),
               ),
             ),
             const SizedBox(width: 12),

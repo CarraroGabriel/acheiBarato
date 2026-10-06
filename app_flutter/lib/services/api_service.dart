@@ -29,11 +29,7 @@ class ApiService {
     Map<String, dynamic> dados,
   ) async {
     final response = await http
-        .post(
-          _uri(rota),
-          headers: _headers(),
-          body: jsonEncode(dados),
-        )
+        .post(_uri(rota), headers: _headers(), body: jsonEncode(dados))
         .timeout(_timeout);
     return _tratarResposta(response);
   }
@@ -43,11 +39,7 @@ class ApiService {
     Map<String, dynamic> dados,
   ) async {
     final response = await http
-        .put(
-          _uri(rota),
-          headers: _headers(),
-          body: jsonEncode(dados),
-        )
+        .put(_uri(rota), headers: _headers(), body: jsonEncode(dados))
         .timeout(_timeout);
     return _tratarResposta(response);
   }
@@ -59,15 +51,32 @@ class ApiService {
     return _tratarResposta(response);
   }
 
+  static Future<Map<String, dynamic>> enviarImagem(
+    String rota,
+    List<int> bytes, {
+    String nomeArquivo = 'foto.jpg',
+  }) async {
+    final requisicao = http.MultipartRequest('POST', _uri(rota))
+      ..headers['Accept'] = 'application/json'
+      ..files.add(
+        http.MultipartFile.fromBytes('foto', bytes, filename: nomeArquivo),
+      );
+
+    final resposta = await http.Response.fromStream(
+      await requisicao.send().timeout(const Duration(seconds: 60)),
+    );
+    return _tratarResposta(resposta);
+  }
+
   static Uri _uri(String rota) {
     final rotaLimpa = rota.startsWith('/') ? rota.substring(1) : rota;
     return Uri.parse('${ApiConfig.baseUrl}/$rotaLimpa');
   }
 
   static Map<String, String> _headers() => const {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Accept': 'application/json',
+  };
 
   static Map<String, dynamic> _tratarResposta(http.Response response) {
     Map<String, dynamic> json;

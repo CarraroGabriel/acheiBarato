@@ -23,6 +23,7 @@ CREATE TABLE Tb_Produto (
                 id_produto INTEGER NOT NULL,
                 nm_produto VARCHAR(50) NOT NULL,
                 id_categoria INTEGER NOT NULL,
+                ds_imagem_padrao VARCHAR(100), -- imagem incluída no app (ex.: asset:produtos/arroz.png)
                 CONSTRAINT pk_produtos PRIMARY KEY (id_produto)
 );
 
@@ -116,7 +117,7 @@ CREATE TABLE Tb_Mercado (
                 ds_senha VARCHAR(255) NOT NULL, -- valor alto para caber o hash de senha
                 fl_motoboy BOOLEAN NOT NULL,
                 nu_taxa_entrega NUMERIC(5,2) NOT NULL DEFAULT 0, -- taxa da tele-entrega; 0 = grátis
-                ds_foto_mercado VARCHAR(50) NOT NULL,
+                ds_foto_mercado VARCHAR(255) NOT NULL, -- caminho em public/uploads (ex.: uploads/mercados/1-mercado-do-ze.jpg)
                 nu_latitude NUMERIC NOT NULL,
                 nu_longitude NUMERIC NOT NULL,
                 nu_avg_nota NUMERIC(3,2) NOT NULL,
@@ -328,7 +329,9 @@ REFERENCES Tb_Usuario (id_usuario);
 
 
 /* View com a descrição completa do item, usada pelas consultas da API.
-ds_item_produto: "ARROZ BRANCO 5 kg" */
+ds_item_produto: "ARROZ BRANCO 5 kg"
+ds_foto_produto: foto do item (enviada pelo mercado ou "asset:" incluída no app);
+ds_imagem_padrao: imagem genérica do produto, usada quando o item não tem foto. */
 
 CREATE OR REPLACE VIEW vw_item_produto AS
 SELECT i.id_item_produto,
@@ -341,7 +344,8 @@ SELECT i.id_item_produto,
        i.ds_foto_produto,
        p.nm_produto || ' ' || t.nm_tipo || ' '
            || REPLACE(TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM i.nu_medida::TEXT)), '.', ',')
-           || ' ' || u.sg_unidade AS ds_item_produto
+           || ' ' || u.sg_unidade AS ds_item_produto,
+       p.ds_imagem_padrao
   FROM tb_item_produto i
  INNER JOIN tb_tipo_produto t ON t.id_tipo = i.id_tipo
  INNER JOIN tb_produto p ON p.id_produto = t.id_produto
@@ -362,20 +366,20 @@ INSERT INTO tb_categoria (nm_categoria) VALUES
     ('GRÃOS'), ('CARNES'), ('MASSAS'), ('LATICÍNIOS'), ('ÓLEOS'),
     ('MERCEARIA'), ('BEBIDAS'), ('LIMPEZA'), ('OUTRO');
 
-INSERT INTO tb_produto (nm_produto, id_categoria)
-SELECT v.nm_produto, c.id_categoria
+INSERT INTO tb_produto (nm_produto, id_categoria, ds_imagem_padrao)
+SELECT v.nm_produto, c.id_categoria, v.ds_imagem_padrao
   FROM (VALUES
-        ('ARROZ',        'GRÃOS'),
-        ('FEIJÃO',       'GRÃOS'),
-        ('CARNE BOVINA', 'CARNES'),
-        ('FRANGO',       'CARNES'),
-        ('MASSA',        'MASSAS'),
-        ('LEITE',        'LATICÍNIOS'),
-        ('ÓLEO',         'ÓLEOS'),
-        ('AÇÚCAR',       'MERCEARIA'),
-        ('CAFÉ',         'MERCEARIA'),
-        ('AMACIANTE',    'LIMPEZA')
-       ) AS v (nm_produto, nm_categoria)
+        ('ARROZ',        'GRÃOS',      'asset:produtos/arroz.png'),
+        ('FEIJÃO',       'GRÃOS',      'asset:produtos/feijao.png'),
+        ('CARNE BOVINA', 'CARNES',     'asset:produtos/carne_bovina.png'),
+        ('FRANGO',       'CARNES',     'asset:produtos/frango.png'),
+        ('MASSA',        'MASSAS',     'asset:produtos/massa.png'),
+        ('LEITE',        'LATICÍNIOS', 'asset:produtos/leite.png'),
+        ('ÓLEO',         'ÓLEOS',      'asset:produtos/oleo.png'),
+        ('AÇÚCAR',       'MERCEARIA',  'asset:produtos/acucar.png'),
+        ('CAFÉ',         'MERCEARIA',  'asset:produtos/cafe.png'),
+        ('AMACIANTE',    'LIMPEZA',    'asset:produtos/amaciante.png')
+       ) AS v (nm_produto, nm_categoria, ds_imagem_padrao)
  INNER JOIN tb_categoria c ON c.nm_categoria = v.nm_categoria;
 
 INSERT INTO tb_tipo_produto (id_produto, nm_tipo)

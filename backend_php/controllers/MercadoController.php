@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Mercado.php';
 require_once __DIR__ . '/../models/ProdutoMercado.php';
 require_once __DIR__ . '/../models/AvaliacaoMercado.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Imagem.php';
 
 class MercadoController
 {
@@ -180,6 +181,33 @@ class MercadoController
             Response::json(false, 'Erro ao atualizar perfil.', null, 500);
         } catch (Throwable $e) {
             Response::json(false, 'Erro ao atualizar perfil.', null, 500);
+        }
+    }
+
+    public function enviarFoto(int $idMercado): void
+    {
+        try {
+            $mercado = $this->mercado->consultarPorId($idMercado);
+
+            if ($mercado === null) {
+                Response::json(false, 'Mercado não encontrado.', null, 404);
+            }
+
+            $novoCaminho = Imagem::salvarUpload(
+                $_FILES['foto'] ?? [],
+                'mercados',
+                $idMercado,
+                (string) $mercado['nm_mercado']
+            );
+
+            $this->mercado->alterarFoto($idMercado, $novoCaminho);
+            Imagem::remover($mercado['ds_foto_mercado'], $novoCaminho);
+
+            Response::json(true, 'Foto do mercado atualizada.', ['ds_foto_mercado' => $novoCaminho], 200);
+        } catch (InvalidArgumentException $e) {
+            Response::json(false, $e->getMessage(), null, 400);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao salvar a foto do mercado.', null, 500);
         }
     }
 

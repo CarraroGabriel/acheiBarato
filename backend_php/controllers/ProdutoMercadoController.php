@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../models/ProdutoMercado.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Imagem.php';
 
 class ProdutoMercadoController
 {
@@ -106,6 +107,34 @@ class ProdutoMercadoController
         }
     }
 
+    public function enviarFoto(int $idProdutoMercado): void
+    {
+        try {
+            $item = $this->produtoMercado->itemDaOferta($idProdutoMercado);
+
+            if ($item === null) {
+                Response::json(false, 'Produto do mercado não encontrado.', null, 404);
+            }
+
+            $idItem = (int) $item['id_item_produto'];
+            $novoCaminho = Imagem::salvarUpload(
+                $_FILES['foto'] ?? [],
+                'produtos',
+                $idItem,
+                $item['ds_item_produto'] . ' ' . $item['nm_marca']
+            );
+
+            $this->produtoMercado->alterarFotoItem($idItem, $novoCaminho);
+            Imagem::remover($item['ds_foto_produto'], $novoCaminho);
+
+            Response::json(true, 'Foto do produto atualizada.', ['ds_foto_produto' => $novoCaminho], 200);
+        } catch (InvalidArgumentException $e) {
+            Response::json(false, $e->getMessage(), null, 400);
+        } catch (Throwable $e) {
+            Response::json(false, 'Erro ao salvar a foto do produto.', null, 500);
+        }
+    }
+
     public function excluir(int $idProdutoMercado): void
     {
         try {
@@ -138,10 +167,6 @@ class ProdutoMercadoController
         }
     }
 
-    /**
-     * Término da promoção, em data/hora ISO 8601 com fuso (ex.: 2026-10-02T23:59:00-03:00).
-     * Vazio/nulo = promoção sem prazo. Retorna a data no formato aceito pelo PostgreSQL.
-     */
     private function lerFimPromocao(mixed $valor): ?string
     {
         if ($valor === null || trim((string) $valor) === '') {

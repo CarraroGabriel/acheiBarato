@@ -5,6 +5,7 @@ import 'package:achei_barato/telas/editar_mercado.dart';
 import 'package:achei_barato/telas/produtos_mercado.dart';
 import 'package:achei_barato/telas/registro_produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/bottomnav_mercado.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
@@ -72,7 +73,6 @@ class _HomeMercadoState extends State<HomeMercado> {
     }
   }
 
-  // Abre uma tela e recarrega o painel na volta, se algo foi alterado.
   Future<void> _abrirERecarregar(Widget tela) async {
     final resultado = await Navigator.push(
       context,
@@ -546,8 +546,6 @@ class _HomeMercadoState extends State<HomeMercado> {
   }
 
   Widget _buildCardPromocao(Map<String, dynamic> produto) {
-    final foto = (produto['ds_foto_produto'] ?? '').toString();
-
     return InkWell(
       onTap: () => _abrirERecarregar(
         EdicaoProduto(idProdutoMercado: _toInt(produto['id_produto_mercado'])),
@@ -568,22 +566,7 @@ class _HomeMercadoState extends State<HomeMercado> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: double.infinity,
-                      color: Colors.grey.shade200,
-                      child: foto.isNotEmpty
-                          ? Image.network(
-                              foto,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) =>
-                                  const Icon(Icons.image, color: Colors.grey),
-                            )
-                          : const Icon(
-                              Icons.image,
-                              color: Colors.grey,
-                              size: 32,
-                            ),
-                    ),
+                    child: ImagemApp.produto(produto, tamanhoIcone: 32),
                   ),
                   Positioned(
                     top: 4,

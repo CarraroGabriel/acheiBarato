@@ -70,7 +70,7 @@ class Favorito
     public function listarProdutos(int $idUsuario): array
     {
         $sql = 'SELECT ip.id_item_produto, ip.id_produto, ip.nm_produto, ip.nm_marca,
-                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_item_produto,
+                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_imagem_padrao, ip.ds_item_produto,
                        pm.id_produto_mercado, pm.nu_valor, pm.nu_qtde,
                        pm.fl_disponivel, pm.dt_atualizacao,
                        ' . ProdutoMercado::SQL_CAMPOS_PROMOCAO . ',
@@ -100,6 +100,7 @@ class Favorito
                     'nm_marca'        => $linha['nm_marca'],
                     'ds_categoria'    => $linha['ds_categoria'],
                     'ds_foto_produto' => $linha['ds_foto_produto'],
+                    'ds_imagem_padrao' => $linha['ds_imagem_padrao'],
                     'mercados'        => [],
                 ];
             }

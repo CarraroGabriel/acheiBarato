@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 
 class RegistroProduto extends StatefulWidget {
   final int idMercado;
@@ -502,24 +503,18 @@ class _RegistroProdutoState extends State<RegistroProduto> {
               ),
             ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () {
-                _mostrarMensagem(
-                  'Upload de foto será integrado em uma etapa específica.',
-                );
-              },
-              icon: const Icon(Icons.add_photo_alternate, color: Colors.red),
-              label: const Text(
-                'Adicionar Foto',
-                style: TextStyle(color: Colors.red),
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Row(
+              children: [
+                Icon(Icons.photo_camera, size: 18, color: Colors.grey.shade600),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Produtos do catálogo já têm imagem padrão. Para enviar uma '
+                    'foto, registre o produto e toque nele na lista de produtos.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 24),
             if (_carregando)
@@ -557,14 +552,15 @@ class _RegistroProdutoState extends State<RegistroProduto> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 60,
+              height: 60,
+              child: ImagemApp(
+                caminhos: [_produtoSelecionado?['ds_imagem_padrao']],
+              ),
             ),
-            child: const Icon(Icons.image, color: Colors.grey, size: 30),
           ),
           const SizedBox(width: 12),
           Expanded(

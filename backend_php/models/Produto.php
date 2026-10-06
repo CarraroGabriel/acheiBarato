@@ -14,7 +14,7 @@ class Produto
 
     public function listar(): array
     {
-        $sql = 'SELECT p.id_produto, p.nm_produto, p.id_categoria, c.nm_categoria
+        $sql = 'SELECT p.id_produto, p.nm_produto, p.id_categoria, c.nm_categoria, p.ds_imagem_padrao
                 FROM tb_produto p
                 INNER JOIN tb_categoria c ON c.id_categoria = p.id_categoria
                 ORDER BY p.nm_produto';
@@ -24,10 +24,9 @@ class Produto
         return $stmt->fetchAll();
     }
 
-    // Produto com os tipos e as marcas sugeridas, usados no cadastro do mercado.
     public function consultarPorId(int $idProduto): ?array
     {
-        $sql = 'SELECT p.id_produto, p.nm_produto, p.id_categoria, c.nm_categoria
+        $sql = 'SELECT p.id_produto, p.nm_produto, p.id_categoria, c.nm_categoria, p.ds_imagem_padrao
                 FROM tb_produto p
                 INNER JOIN tb_categoria c ON c.id_categoria = p.id_categoria
                 WHERE p.id_produto = :id_produto';

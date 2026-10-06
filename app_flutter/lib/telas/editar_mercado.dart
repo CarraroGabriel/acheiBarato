@@ -6,6 +6,7 @@ import 'package:achei_barato/widgets/botao_excluir_conta.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
 import 'package:achei_barato/widgets/editor_horarios.dart';
 import 'package:achei_barato/widgets/foto_perfil.dart';
+import 'package:achei_barato/widgets/selecionar_imagem.dart';
 
 class EditarMercado extends StatefulWidget {
   final int idMercado;
@@ -24,7 +25,8 @@ class _EditarMercadoState extends State<EditarMercado> {
   final _taxaController = TextEditingController();
 
   bool _temMotoboy = false;
-  String? _fotoUrl;
+  String? _foto;
+  bool _enviandoFoto = false;
 
   // Dia da semana (0 = domingo) -> faixas de funcionamento. Dia sem faixas = fechado.
   Map<int, List<FaixaHorario>> _horarios = {};
@@ -75,7 +77,7 @@ class _EditarMercadoState extends State<EditarMercado> {
         _taxaController.text = taxa == null
             ? ''
             : taxa.toStringAsFixed(2).replaceAll('.', ',');
-        _fotoUrl = (mercado['ds_foto_mercado'] ?? '').toString();
+        _foto = (mercado['ds_foto_mercado'] ?? '').toString();
         _horarios = EditorHorarios.lerDaApi(mercado['horarios']);
       });
     } on ApiException catch (e) {
@@ -86,6 +88,33 @@ class _EditarMercadoState extends State<EditarMercado> {
       }
     } finally {
       if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  Future<void> _alterarFoto() async {
+    final arquivo = await SelecionarImagem.escolher(context);
+    if (arquivo == null || !mounted) return;
+
+    setState(() => _enviandoFoto = true);
+
+    try {
+      final resposta = await ApiService.enviarImagem(
+        'mercados/${widget.idMercado}/foto',
+        await arquivo.readAsBytes(),
+        nomeArquivo: arquivo.name,
+      );
+
+      PaintingBinding.instance.imageCache.clear();
+
+      if (!mounted) return;
+      setState(() => _foto = resposta['dados']['ds_foto_mercado']?.toString());
+      _mostrarMensagem('Foto do mercado atualizada.');
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível enviar a foto.');
+    } finally {
+      if (mounted) setState(() => _enviandoFoto = false);
     }
   }
 
@@ -215,7 +244,12 @@ class _EditarMercadoState extends State<EditarMercado> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            FotoPerfil(urlAtual: _fotoUrl, iconePadrao: Icons.store),
+            FotoPerfil(
+              caminho: _foto,
+              iconePadrao: Icons.store,
+              enviando: _enviandoFoto,
+              onAlterar: _alterarFoto,
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _nomeController,

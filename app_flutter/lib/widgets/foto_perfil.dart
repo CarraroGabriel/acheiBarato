@@ -1,48 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 
 class FotoPerfil extends StatelessWidget {
-  final String? urlAtual;
+  final String? caminho;
   final IconData iconePadrao;
+  final bool enviando;
+  final VoidCallback? onAlterar;
 
   const FotoPerfil({
     super.key,
-    required this.urlAtual,
+    required this.caminho,
     required this.iconePadrao,
+    this.enviando = false,
+    this.onAlterar,
   });
-
-  void _avisarEmDesenvolvimento(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Upload de foto será integrado em uma etapa específica.'),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    final temFoto = urlAtual != null && urlAtual!.isNotEmpty;
+    final podeAlterar = onAlterar != null && !enviando;
 
     return Column(
       children: [
         GestureDetector(
-          onTap: () => _avisarEmDesenvolvimento(context),
-          child: CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.grey.shade200,
-            backgroundImage: temFoto ? NetworkImage(urlAtual!) : null,
-            child: temFoto
-                ? null
-                : Icon(iconePadrao, size: 50, color: Colors.grey),
+          onTap: podeAlterar ? onAlterar : null,
+          child: SizedBox(
+            width: 100,
+            height: 100,
+            child: Stack(
+              children: [
+                ClipOval(
+                  child: ImagemApp(
+                    caminhos: [caminho],
+                    iconePadrao: iconePadrao,
+                    tamanhoIcone: 50,
+                  ),
+                ),
+                if (enviando)
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black38,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
-        TextButton.icon(
-          onPressed: () => _avisarEmDesenvolvimento(context),
-          icon: const Icon(Icons.photo_camera, color: Colors.red),
-          label: const Text(
-            'Alterar foto',
-            style: TextStyle(color: Colors.red),
+        if (onAlterar != null)
+          TextButton.icon(
+            onPressed: podeAlterar ? onAlterar : null,
+            icon: const Icon(Icons.photo_camera, color: Colors.red),
+            label: Text(
+              enviando ? 'Enviando foto...' : 'Alterar foto',
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
-        ),
       ],
     );
   }

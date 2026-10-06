@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
+import 'package:achei_barato/widgets/selecionar_imagem.dart';
 
 class EdicaoProduto extends StatefulWidget {
   final int idProdutoMercado;
@@ -23,6 +25,7 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
 
   bool _carregando = true;
   bool _salvando = false;
+  bool _enviandoFoto = false;
   String? _erro;
 
   final _valorController = TextEditingController();
@@ -87,6 +90,88 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
+  }
+
+  Future<void> _alterarFoto() async {
+    final arquivo = await SelecionarImagem.escolher(context);
+    if (arquivo == null || !mounted) return;
+
+    setState(() => _enviandoFoto = true);
+
+    try {
+      final resposta = await ApiService.enviarImagem(
+        'produto_mercado/${widget.idProdutoMercado}/foto',
+        await arquivo.readAsBytes(),
+        nomeArquivo: arquivo.name,
+      );
+
+      PaintingBinding.instance.imageCache.clear();
+
+      if (!mounted) return;
+      setState(
+        () =>
+            _produto?['ds_foto_produto'] = resposta['dados']['ds_foto_produto'],
+      );
+      _mostrarMensagem('Foto do produto atualizada.');
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível enviar a foto.');
+    } finally {
+      if (mounted) setState(() => _enviandoFoto = false);
+    }
+  }
+
+  Widget _buildFotoProduto(Map<String, dynamic> produto) {
+    final temFotoPropria = (produto['ds_foto_produto'] ?? '')
+        .toString()
+        .startsWith('uploads/');
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            height: 160,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ImagemApp.produto(
+                  produto,
+                  tamanhoIcone: 48,
+                  fit: BoxFit.contain,
+                ),
+                if (_enviandoFoto)
+                  const ColoredBox(
+                    color: Colors.black38,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _enviandoFoto ? null : _alterarFoto,
+          icon: const Icon(Icons.photo_camera, color: Colors.red),
+          label: Text(
+            temFotoPropria
+                ? 'Trocar foto do produto'
+                : 'Enviar foto do produto',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+        Text(
+          temFotoPropria
+              ? 'A foto aparece para este produto em todos os mercados.'
+              : 'Sem foto enviada, o app mostra a imagem padrão do produto.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        ),
+      ],
+    );
   }
 
   Future<void> _salvar() async {
@@ -217,6 +302,8 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
+            const SizedBox(height: 16),
+            _buildFotoProduto(produto),
             const SizedBox(height: 20),
             Row(
               children: [

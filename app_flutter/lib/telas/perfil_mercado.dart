@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/horario_funcionamento.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class PerfilMercado extends StatefulWidget {
@@ -236,7 +237,6 @@ class _PerfilMercadoState extends State<PerfilMercado> {
     }
 
     final mercado = _mercado ?? {};
-    final foto = (mercado['ds_foto_mercado'] ?? '').toString();
     final temMotoboy = _toBool(mercado['fl_motoboy']);
 
     return RefreshIndicator(
@@ -265,19 +265,16 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                         ),
                       ],
                     ),
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey.shade200,
-                      backgroundImage: foto.isNotEmpty
-                          ? NetworkImage(foto)
-                          : null,
-                      child: foto.isEmpty
-                          ? const Icon(
-                              Icons.store,
-                              size: 50,
-                              color: Colors.grey,
-                            )
-                          : null,
+                    child: SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: ClipOval(
+                        child: ImagemApp(
+                          caminhos: [mercado['ds_foto_mercado']],
+                          iconePadrao: Icons.store,
+                          tamanhoIcone: 50,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -466,14 +463,13 @@ class _PerfilMercadoState extends State<PerfilMercado> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 60,
+              height: 60,
+              child: ImagemApp.produto(produto),
             ),
-            child: const Icon(Icons.image, color: Colors.grey, size: 30),
           ),
           const SizedBox(width: 12),
           Expanded(

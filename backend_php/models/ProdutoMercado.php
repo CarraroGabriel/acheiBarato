@@ -29,7 +29,7 @@ class ProdutoMercado
 
     private const SELECT_BASE = 'SELECT pm.id_produto_mercado, pm.id_item_produto, pm.id_mercado,
                        ip.id_produto, ip.nm_produto, ip.nm_tipo, ip.nm_marca,
-                       ip.id_categoria, ip.nm_categoria AS ds_categoria, ip.ds_foto_produto,
+                       ip.id_categoria, ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_imagem_padrao,
                        ip.nu_medida, ip.sg_unidade, ip.ds_item_produto,
                        m.nm_mercado,
                        pm.nu_valor, pm.nu_qtde, pm.fl_disponivel,
@@ -162,6 +162,32 @@ class ProdutoMercado
         return $this->consultarPorId($idProdutoMercado);
     }
 
+    public function itemDaOferta(int $idProdutoMercado): ?array
+    {
+        $stmt = $this->conexao->prepare(
+            'SELECT ip.id_item_produto, ip.ds_item_produto, ip.nm_marca, ip.ds_foto_produto
+             FROM tb_produto_mercado pm
+             INNER JOIN vw_item_produto ip ON ip.id_item_produto = pm.id_item_produto
+             WHERE pm.id_produto_mercado = :id_produto_mercado'
+        );
+        $stmt->bindValue(':id_produto_mercado', $idProdutoMercado, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $item = $stmt->fetch();
+        return $item ?: null;
+    }
+
+    public function alterarFotoItem(int $idItemProduto, string $caminho): void
+    {
+        $stmt = $this->conexao->prepare(
+            'UPDATE tb_item_produto SET ds_foto_produto = :caminho
+             WHERE id_item_produto = :id_item_produto'
+        );
+        $stmt->bindValue(':caminho', $caminho);
+        $stmt->bindValue(':id_item_produto', $idItemProduto, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
     public function excluir(int $idProdutoMercado): bool
     {
         $sql = 'DELETE FROM tb_produto_mercado WHERE id_produto_mercado = :id_produto_mercado';
@@ -226,7 +252,7 @@ class ProdutoMercado
         };
 
         $sql = "SELECT ip.id_item_produto, ip.id_produto, ip.ds_item_produto, ip.nm_marca,
-                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto,
+                       ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_imagem_padrao,
                        MIN({$valorFinal}) AS nu_menor_preco,
                        COUNT(DISTINCT pm.id_mercado) AS qt_mercados,
                        BOOL_OR({$promocaoAtiva}) AS fl_promocao
@@ -234,7 +260,7 @@ class ProdutoMercado
                 INNER JOIN tb_produto_mercado pm ON pm.id_item_produto = ip.id_item_produto
                 WHERE " . implode(' AND ', $where) . '
                 GROUP BY ip.id_item_produto, ip.id_produto, ip.ds_item_produto, ip.nm_marca,
-                         ip.nm_categoria, ip.ds_foto_produto'
+                         ip.nm_categoria, ip.ds_foto_produto, ip.ds_imagem_padrao'
                 . ($having ? ' HAVING ' . implode(' AND ', $having) : '') . "
                 ORDER BY {$ordem}
                 LIMIT 100";
@@ -263,7 +289,7 @@ class ProdutoMercado
     {
         $stmt = $this->conexao->prepare(
             'SELECT id_item_produto, id_produto, ds_item_produto, nm_produto, nm_tipo,
-                    nm_marca, nm_categoria, nu_medida, sg_unidade, ds_foto_produto
+                    nm_marca, nm_categoria, nu_medida, sg_unidade, ds_foto_produto, ds_imagem_padrao
              FROM vw_item_produto
              WHERE id_item_produto = :id_item_produto'
         );

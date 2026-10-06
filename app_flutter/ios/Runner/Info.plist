@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>O Achei Barato usa a câmera para você fotografar o mercado e os produtos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O Achei Barato usa a galeria para você escolher fotos do mercado e dos produtos.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

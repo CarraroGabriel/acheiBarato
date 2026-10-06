@@ -33,8 +33,13 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Painel do lojista** — visão geral com produtos cadastrados, em promoção, disponíveis, com estoque baixo e indisponíveis, nota média, quantidade de favoritos e avisos de informações faltando (horário e foto)
 - **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria
 - **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes
-- **Edição de produto** — preço, estoque, disponibilidade e promoção com percentual de desconto e prazo de término
-- **Perfil do mercado** — nome, e-mail, endereço/CEP, tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
+- **Edição de produto** — preço, estoque, disponibilidade, promoção com percentual de desconto e prazo de término, e foto do produto
+- **Perfil do mercado** — foto do estabelecimento, nome, e-mail, endereço/CEP, tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
+
+### Imagens
+- **Fotos pela câmera ou galeria** do celular, reduzidas no app antes do envio e salvas no servidor (`public/uploads`); o banco guarda apenas o caminho do arquivo, com nome padronizado `{id}-{nome}.jpg` (ex.: `17-arroz-branco-5-kg-tio-joao.jpg`)
+- **Imagem padrão dos produtos** incluída no app (`assets/produtos`) e ligada pelo banco, usada quando o mercado não envia foto
+- Ordem de exibição de um produto: foto enviada → imagem padrão → ícone
 
 > 🔧 **Geolocalização** (mapa na tela principal e coordenadas dos mercados para o cálculo de distância) está prevista para implementação até o fim do mês de Outubro de 2026.
 
@@ -61,8 +66,8 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Perfil do Usuário | Edição de nome e e-mail e exclusão da conta | ✅ Implementada |
 | Painel do Lojista | Visão geral, pendências e promoções atuais | ✅ Implementada |
 | Produtos do Mercado (Lojista) | Lista de produtos com filtros | ✅ Implementada |
-| Cadastro e Edição de Produtos (Lojista) | Cadastro pelo catálogo, preços, estoque e promoções | ✅ Implementada |
-| Perfil do Mercado (Lojista) | Dados do mercado, tele-entrega e horário de funcionamento | ✅ Implementada (foto em desenvolvimento) |
+| Cadastro e Edição de Produtos (Lojista) | Cadastro pelo catálogo, preços, estoque, promoções e foto do produto | ✅ Implementada |
+| Perfil do Mercado (Lojista) | Foto, dados do mercado, tele-entrega e horário de funcionamento | ✅ Implementada |
 | Carrinho / Pedidos *(adição futura)* | Lista de itens com indicação do melhor mercado para cada um | 🔮 Futura |
 
 ---
@@ -75,6 +80,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Backend | PHP (API REST) |
 | Banco de Dados | PostgreSQL |
 | Localização | [geolocator](https://pub.dev/packages/geolocator) |
+| Fotos (câmera/galeria) | [image_picker](https://pub.dev/packages/image_picker) |
 | Notificações *(previsto)* | Firebase Cloud Messaging |
 
 ---
@@ -87,4 +93,4 @@ Atualmente está prevista a implementação de:
 
 - 📍 **Integração com geolocalização** — mapa na tela principal, localização do usuário e coordenadas dos mercados para exibir distâncias e filtrar mercados próximos
 - 🔔 **Notificações com Firebase** — aviso ao usuário quando um produto favoritado entrar em promoção (a relação de produtos favoritos já está pronta no banco)
-- 🖼️ **Fotos e imagens** — envio de fotos dos mercados e dos produtos (os campos já existem no banco; a forma de armazenamento está em definição)
+- 🖼️ **Imagens padrão dos produtos** — o envio de fotos já está implementado; falta adicionar as ilustrações dos produtos do catálogo em `app_flutter/assets/produtos`

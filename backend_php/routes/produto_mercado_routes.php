@@ -20,7 +20,11 @@ function tratarRotasProdutoMercado(string $metodo, array $rota): void
             }
             break;
         case 'POST':
-            $controller->inserir();
+            if ($idProdutoMercado !== null && ($rota[2] ?? null) === 'foto') {
+                $controller->enviarFoto($idProdutoMercado);
+            } else {
+                $controller->inserir();
+            }
             break;
         case 'PUT':
             if ($idProdutoMercado === null) {

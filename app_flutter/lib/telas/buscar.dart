@@ -7,6 +7,7 @@ import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/telas/produto.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 
 enum OrdemProdutos {
@@ -532,7 +533,6 @@ class _BuscarState extends State<Buscar> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildCardProduto(Map<String, dynamic> produto) {
-    final foto = (produto['ds_foto_produto'] ?? '').toString();
     final qtMercados = _toInt(produto['qt_mercados']);
 
     return Card(
@@ -549,7 +549,11 @@ class _BuscarState extends State<Buscar> with SingleTickerProviderStateMixin {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              _buildImagem(foto, Icons.image, 64),
+              _buildImagem(
+                [produto['ds_foto_produto'], produto['ds_imagem_padrao']],
+                Icons.image,
+                64,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -883,7 +887,7 @@ class _BuscarState extends State<Buscar> with SingleTickerProviderStateMixin {
           child: Row(
             children: [
               _buildImagem(
-                (mercado['ds_foto_mercado'] ?? '').toString(),
+                [mercado['ds_foto_mercado']],
                 Icons.store,
                 52,
                 circular: true,
@@ -1220,27 +1224,21 @@ class _BuscarState extends State<Buscar> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildImagem(
-    String url,
+    List<dynamic> caminhos,
     IconData iconePadrao,
     double tamanho, {
     bool circular = false,
   }) {
-    final raio = BorderRadius.circular(circular ? tamanho : 8);
-
     return ClipRRect(
-      borderRadius: raio,
-      child: Container(
+      borderRadius: BorderRadius.circular(circular ? tamanho : 8),
+      child: SizedBox(
         width: tamanho,
         height: tamanho,
-        color: Colors.grey.shade200,
-        child: url.isEmpty
-            ? Icon(iconePadrao, color: Colors.grey, size: tamanho / 2)
-            : Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    Icon(iconePadrao, color: Colors.grey, size: tamanho / 2),
-              ),
+        child: ImagemApp(
+          caminhos: caminhos,
+          iconePadrao: iconePadrao,
+          tamanhoIcone: tamanho / 2,
+        ),
       ),
     );
   }

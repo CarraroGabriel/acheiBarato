@@ -14,6 +14,11 @@ function tratarRotasMercado(string $metodo, array $rota): void
         return;
     }
 
+    if ($metodo === 'POST' && $idMercado !== null && $subrota === 'foto') {
+        $controller->enviarFoto($idMercado);
+        return;
+    }
+
     if ($metodo === 'GET' && $idMercado !== null && $subrota === 'resumo') {
         $controller->resumo($idMercado);
         return;

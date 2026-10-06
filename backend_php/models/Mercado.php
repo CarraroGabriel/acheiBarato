@@ -79,6 +79,16 @@ class Mercado
         return $mercado;
     }
 
+    public function alterarFoto(int $idMercado, string $caminho): void
+    {
+        $stmt = $this->conexao->prepare(
+            'UPDATE tb_mercado SET ds_foto_mercado = :caminho WHERE id_mercado = :id_mercado'
+        );
+        $stmt->bindValue(':caminho', $caminho);
+        $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
     public function listarHorarios(int $idMercado): array
     {
         return $this->horariosPorMercado([$idMercado])[$idMercado] ?? [];

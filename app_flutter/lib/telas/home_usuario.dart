@@ -4,6 +4,7 @@ import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
 import 'package:achei_barato/widgets/editor_horarios.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
@@ -269,7 +270,6 @@ class _HomeUsuarioState extends State<HomeUsuario> {
     );
   }
 
-  // "Aberto" / "Fechado" pelo horário do aparelho; sem horário cadastrado, avisa.
   Widget _buildSituacaoMercado(Map<String, dynamic> mercado) {
     final aberto = EditorHorarios.estaAberto(
       EditorHorarios.lerDaApi(mercado['horarios']),
@@ -382,20 +382,16 @@ class _HomeUsuarioState extends State<HomeUsuario> {
   }
 
   Widget _buildLogoMercado(Map<String, dynamic> mercado) {
-    final foto = (mercado['ds_foto_mercado'] ?? '').toString();
-
-    if (foto.isEmpty) {
-      return CircleAvatar(
-        radius: 22,
-        backgroundColor: Colors.grey.shade200,
-        child: const Icon(Icons.store, color: Colors.grey, size: 22),
-      );
-    }
-
-    return CircleAvatar(
-      radius: 22,
-      backgroundColor: Colors.grey.shade200,
-      backgroundImage: NetworkImage(foto),
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: ClipOval(
+        child: ImagemApp(
+          caminhos: [mercado['ds_foto_mercado']],
+          iconePadrao: Icons.store,
+          tamanhoIcone: 22,
+        ),
+      ),
     );
   }
 
@@ -412,14 +408,9 @@ class _HomeUsuarioState extends State<HomeUsuario> {
           Expanded(
             child: Stack(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.image, color: Colors.grey, size: 36),
-                  ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: ImagemApp.produto(produto, tamanhoIcone: 36),
                 ),
                 Positioned(
                   top: 6,

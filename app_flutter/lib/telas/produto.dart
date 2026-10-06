@@ -3,6 +3,7 @@ import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class ProdutoTela extends StatefulWidget {
@@ -191,7 +192,7 @@ class _ProdutoTelaState extends State<ProdutoTela> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          _buildFoto((item['ds_foto_produto'] ?? '').toString()),
+          _buildFoto(item),
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,26 +298,14 @@ class _ProdutoTelaState extends State<ProdutoTela> {
     );
   }
 
-  Widget _buildFoto(String url) {
-    final placeholder = Icon(
-      Icons.image,
-      size: 64,
-      color: Colors.grey.shade400,
-    );
-
+  Widget _buildFoto(Map<String, dynamic> item) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Container(
+        child: ColoredBox(
           color: Colors.grey.shade200,
-          child: url.isEmpty
-              ? placeholder
-              : Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => placeholder,
-                ),
+          child: ImagemApp.produto(item, tamanhoIcone: 64, fit: BoxFit.contain),
         ),
       ),
     );
