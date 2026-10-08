@@ -114,10 +114,14 @@ CREATE TABLE Tb_Mercado (
                 ds_email VARCHAR(50) NOT NULL,
                 nu_cep INTEGER NOT NULL,
                 nm_endereco VARCHAR(50) NOT NULL,
+                nu_numero VARCHAR(10) NOT NULL DEFAULT 'S/N', -- texto para aceitar 123A, S/N, KM 5
+                nm_bairro VARCHAR(40) NOT NULL DEFAULT '', -- bairro, cidade e UF vêm do CEP (ViaCEP)
+                nm_cidade VARCHAR(40) NOT NULL DEFAULT '',
+                sg_uf CHAR(2) NOT NULL DEFAULT '',
                 ds_senha VARCHAR(255) NOT NULL, -- valor alto para caber o hash de senha
                 fl_motoboy BOOLEAN NOT NULL,
                 nu_taxa_entrega NUMERIC(5,2) NOT NULL DEFAULT 0, -- taxa da tele-entrega; 0 = grátis
-                ds_foto_mercado VARCHAR(255) NOT NULL, -- caminho em public/uploads (ex.: uploads/mercados/1-mercado-do-ze.jpg)
+                ds_foto_mercado VARCHAR(255) NOT NULL,
                 nu_latitude NUMERIC NOT NULL,
                 nu_longitude NUMERIC NOT NULL,
                 nu_avg_nota NUMERIC(3,2) NOT NULL,

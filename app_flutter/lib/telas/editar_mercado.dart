@@ -4,6 +4,7 @@ import 'package:achei_barato/telas/login.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/botao_excluir_conta.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
+import 'package:achei_barato/widgets/campos_endereco.dart';
 import 'package:achei_barato/widgets/editor_horarios.dart';
 import 'package:achei_barato/widgets/foto_perfil.dart';
 import 'package:achei_barato/widgets/selecionar_imagem.dart';
@@ -20,8 +21,7 @@ class EditarMercado extends StatefulWidget {
 class _EditarMercadoState extends State<EditarMercado> {
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
-  final _cepController = TextEditingController();
-  final _enderecoController = TextEditingController();
+  final _endereco = EnderecoMercado();
   final _taxaController = TextEditingController();
 
   bool _temMotoboy = false;
@@ -44,8 +44,7 @@ class _EditarMercadoState extends State<EditarMercado> {
   void dispose() {
     _nomeController.dispose();
     _emailController.dispose();
-    _cepController.dispose();
-    _enderecoController.dispose();
+    _endereco.dispose();
     _taxaController.dispose();
     super.dispose();
   }
@@ -65,11 +64,7 @@ class _EditarMercadoState extends State<EditarMercado> {
       setState(() {
         _nomeController.text = (mercado['nm_mercado'] ?? '').toString();
         _emailController.text = (mercado['ds_email'] ?? '').toString();
-        _cepController.text = (mercado['nu_cep'] ?? '').toString().padLeft(
-          8,
-          '0',
-        );
-        _enderecoController.text = (mercado['nm_endereco'] ?? '').toString();
+        _endereco.carregar(mercado);
         _temMotoboy = _toBool(mercado['fl_motoboy']);
         final taxa = double.tryParse(
           (mercado['nu_taxa_entrega'] ?? '').toString(),
@@ -121,11 +116,14 @@ class _EditarMercadoState extends State<EditarMercado> {
   Future<void> _salvar() async {
     final nome = _nomeController.text.trim();
 
-    if (nome.isEmpty ||
-        _emailController.text.trim().isEmpty ||
-        _cepController.text.trim().isEmpty ||
-        _enderecoController.text.trim().isEmpty) {
+    if (nome.isEmpty || _emailController.text.trim().isEmpty) {
       _mostrarMensagem('Preencha todos os campos.');
+      return;
+    }
+
+    final erroEndereco = _endereco.validar();
+    if (erroEndereco != null) {
+      _mostrarMensagem(erroEndereco);
       return;
     }
 
@@ -148,11 +146,12 @@ class _EditarMercadoState extends State<EditarMercado> {
     setState(() => _salvando = true);
 
     try {
+      final localizado = await _endereco.resolverCoordenadas();
+
       await ApiService.put('mercados/${widget.idMercado}/perfil', {
         'nm_mercado': nome,
         'ds_email': _emailController.text.trim(),
-        'nu_cep': _cepController.text.trim(),
-        'nm_endereco': _enderecoController.text.trim(),
+        ..._endereco.paraApi(),
         'fl_motoboy': _temMotoboy,
         'nu_taxa_entrega': _temMotoboy ? taxa : 0,
         'horarios': EditorHorarios.paraApi(_horarios),
@@ -161,7 +160,14 @@ class _EditarMercadoState extends State<EditarMercado> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perfil atualizado com sucesso.')),
+        SnackBar(
+          content: Text(
+            localizado || _endereco.temCoordenadas
+                ? 'Perfil atualizado com sucesso.'
+                : 'Perfil atualizado, mas o endereço não foi encontrado no mapa. '
+                      'Use "Usar minha localização atual" na loja.',
+          ),
+        ),
       );
       Navigator.pop(context, nome);
     } on ApiException catch (e) {
@@ -270,24 +276,7 @@ class _EditarMercadoState extends State<EditarMercado> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _cepController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'CEP',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.location_on),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _enderecoController,
-              decoration: const InputDecoration(
-                labelText: 'Endereço',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.map),
-              ),
-            ),
+            CamposEndereco(endereco: _endereco),
             const SizedBox(height: 8),
             SwitchListTile(
               value: _temMotoboy,

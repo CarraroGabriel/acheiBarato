@@ -31,7 +31,7 @@ class Mercado
             $where[] = $motoboy ? 'm.fl_motoboy = TRUE' : 'm.fl_motoboy = FALSE';
         }
 
-        $sql = 'SELECT m.id_mercado, m.nu_cnpj, m.nm_mercado, m.ds_email, m.nu_cep, m.nm_endereco,
+        $sql = 'SELECT m.id_mercado, m.nu_cnpj, m.nm_mercado, m.ds_email, m.nu_cep, m.nm_endereco, m.nu_numero, m.nm_bairro, m.nm_cidade, m.sg_uf,
                        m.fl_motoboy, m.nu_taxa_entrega, m.ds_foto_mercado, m.nu_latitude, m.nu_longitude,
                        m.nu_avg_nota, m.nul_avaliacoes,
                        (SELECT COUNT(*)
@@ -59,7 +59,7 @@ class Mercado
 
     public function consultarPorId(int $idMercado): ?array
     {
-        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, nu_numero, nm_bairro, nm_cidade, sg_uf,
                        fl_motoboy, nu_taxa_entrega, ds_foto_mercado, nu_latitude, nu_longitude,
                        nu_avg_nota, nul_avaliacoes
                 FROM tb_mercado
@@ -184,14 +184,14 @@ class Mercado
     public function inserir(array $dados): array
     {
         $sql = 'INSERT INTO tb_mercado
-                    (nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, ds_senha,
+                    (nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, nu_numero, nm_bairro, nm_cidade, sg_uf, ds_senha,
                      fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
                      nu_avg_nota, nul_avaliacoes)
                 VALUES
-                    (:nu_cnpj, :nm_mercado, :ds_email, :nu_cep, :nm_endereco, :ds_senha,
+                    (:nu_cnpj, :nm_mercado, :ds_email, :nu_cep, :nm_endereco, :nu_numero, :nm_bairro, :nm_cidade, :sg_uf, :ds_senha,
                      :fl_motoboy, :ds_foto_mercado, :nu_latitude, :nu_longitude,
                      :nu_avg_nota, :nul_avaliacoes)
-                RETURNING id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+                RETURNING id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, nu_numero, nm_bairro, nm_cidade, sg_uf,
                           fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
                           nu_avg_nota, nul_avaliacoes';
 
@@ -203,6 +203,10 @@ class Mercado
         $stmt->bindValue(':ds_email', $dados['ds_email']);
         $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
         $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
+        $stmt->bindValue(':nu_numero', $dados['nu_numero']);
+        $stmt->bindValue(':nm_bairro', $dados['nm_bairro']);
+        $stmt->bindValue(':nm_cidade', $dados['nm_cidade']);
+        $stmt->bindValue(':sg_uf', $dados['sg_uf']);
         $stmt->bindValue(':ds_senha', $senhaHash);
         $stmt->bindValue(':fl_motoboy', $dados['fl_motoboy'], PDO::PARAM_BOOL);
         $stmt->bindValue(':ds_foto_mercado', $dados['ds_foto_mercado']);
@@ -223,6 +227,10 @@ class Mercado
             'ds_email = :ds_email',
             'nu_cep = :nu_cep',
             'nm_endereco = :nm_endereco',
+            'nu_numero = :nu_numero',
+            'nm_bairro = :nm_bairro',
+            'nm_cidade = :nm_cidade',
+            'sg_uf = :sg_uf',
             'fl_motoboy = :fl_motoboy',
             'ds_foto_mercado = :ds_foto_mercado',
             'nu_latitude = :nu_latitude',
@@ -238,7 +246,7 @@ class Mercado
         $sql = 'UPDATE tb_mercado
                 SET ' . implode(', ', $campos) . '
                 WHERE id_mercado = :id_mercado
-                RETURNING id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+                RETURNING id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, nu_numero, nm_bairro, nm_cidade, sg_uf,
                           fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
                           nu_avg_nota, nul_avaliacoes';
 
@@ -248,6 +256,10 @@ class Mercado
         $stmt->bindValue(':ds_email', $dados['ds_email']);
         $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
         $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
+        $stmt->bindValue(':nu_numero', $dados['nu_numero']);
+        $stmt->bindValue(':nm_bairro', $dados['nm_bairro']);
+        $stmt->bindValue(':nm_cidade', $dados['nm_cidade']);
+        $stmt->bindValue(':sg_uf', $dados['sg_uf']);
         $stmt->bindValue(':fl_motoboy', $dados['fl_motoboy'], PDO::PARAM_BOOL);
         $stmt->bindValue(':ds_foto_mercado', $dados['ds_foto_mercado']);
         $stmt->bindValue(':nu_latitude', $dados['nu_latitude']);
@@ -272,11 +284,17 @@ class Mercado
                     ds_email = :ds_email,
                     nu_cep = :nu_cep,
                     nm_endereco = :nm_endereco,
+                    nu_numero = :nu_numero,
+                    nm_bairro = :nm_bairro,
+                    nm_cidade = :nm_cidade,
+                    sg_uf = :sg_uf,
+                    nu_latitude = :nu_latitude,
+                    nu_longitude = :nu_longitude,
                     fl_motoboy = :fl_motoboy,
                     nu_taxa_entrega = :nu_taxa_entrega
                 WHERE id_mercado = :id_mercado
-                RETURNING id_mercado, nm_mercado, ds_email, nu_cep, nm_endereco,
-                          fl_motoboy, nu_taxa_entrega, ds_foto_mercado';
+                RETURNING id_mercado, nm_mercado, ds_email, nu_cep, nm_endereco, nu_numero, nm_bairro, nm_cidade, sg_uf,
+                          nu_latitude, nu_longitude, fl_motoboy, nu_taxa_entrega, ds_foto_mercado';
 
         $this->conexao->beginTransaction();
 
@@ -286,6 +304,12 @@ class Mercado
             $stmt->bindValue(':ds_email', $dados['ds_email']);
             $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
             $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
+            $stmt->bindValue(':nu_numero', $dados['nu_numero']);
+            $stmt->bindValue(':nm_bairro', $dados['nm_bairro']);
+            $stmt->bindValue(':nm_cidade', $dados['nm_cidade']);
+            $stmt->bindValue(':sg_uf', $dados['sg_uf']);
+            $stmt->bindValue(':nu_latitude', $dados['nu_latitude']);
+            $stmt->bindValue(':nu_longitude', $dados['nu_longitude']);
             $stmt->bindValue(':fl_motoboy', $dados['fl_motoboy'], PDO::PARAM_BOOL);
             $stmt->bindValue(':nu_taxa_entrega', $dados['nu_taxa_entrega']);
             $stmt->bindValue(':id_mercado', $idMercado, PDO::PARAM_INT);

@@ -132,6 +132,7 @@ class MercadoController
                 'ds_email' => trim((string) ($dados['ds_email'] ?? '')),
                 'nu_cep' => preg_replace('/\D/', '', (string) ($dados['nu_cep'] ?? '')),
                 'nm_endereco' => trim((string) ($dados['nm_endereco'] ?? '')),
+                'nu_numero' => trim((string) ($dados['nu_numero'] ?? '')),
                 'fl_motoboy' => (bool) ($dados['fl_motoboy'] ?? false),
                 'horarios' => $this->lerHorarios($dados),
             ];
@@ -152,6 +153,12 @@ class MercadoController
             if (!preg_match('/^.{1,50}$/u', $perfil['nm_endereco'])) {
                 throw new InvalidArgumentException('Informe um endereço com até 50 caracteres.');
             }
+
+            if (!preg_match('/^.{1,10}$/u', $perfil['nu_numero'])) {
+                throw new InvalidArgumentException('Informe o número com até 10 caracteres (use S/N se não houver).');
+            }
+
+            $perfil = array_merge($perfil, $this->lerComplementoEndereco($dados));
 
             $perfil['nu_taxa_entrega'] = 0.0;
 
@@ -339,9 +346,38 @@ class MercadoController
         return is_array($dados) ? $dados : [];
     }
 
+    private function lerComplementoEndereco(array $dados): array
+    {
+        $complemento = [
+            'nm_bairro' => trim((string) ($dados['nm_bairro'] ?? '')),
+            'nm_cidade' => trim((string) ($dados['nm_cidade'] ?? '')),
+            'sg_uf' => strtoupper(trim((string) ($dados['sg_uf'] ?? ''))),
+            'nu_latitude' => (float) ($dados['nu_latitude'] ?? 0),
+            'nu_longitude' => (float) ($dados['nu_longitude'] ?? 0),
+        ];
+
+        if (!preg_match('/^.{0,40}$/u', $complemento['nm_bairro'])) {
+            throw new InvalidArgumentException('Informe um bairro com até 40 caracteres.');
+        }
+
+        if (!preg_match('/^.{1,40}$/u', $complemento['nm_cidade'])) {
+            throw new InvalidArgumentException('Informe uma cidade com até 40 caracteres.');
+        }
+
+        if (!preg_match('/^[A-Z]{2}$/', $complemento['sg_uf'])) {
+            throw new InvalidArgumentException('Informe a UF com 2 letras.');
+        }
+
+        if (abs($complemento['nu_latitude']) > 90 || abs($complemento['nu_longitude']) > 180) {
+            throw new InvalidArgumentException('Coordenadas do mercado inválidas.');
+        }
+
+        return $complemento;
+    }
+
     private function normalizarEValidar(array $dados, bool $senhaObrigatoria): array
     {
-        $obrigatorios = ['nu_cnpj', 'nm_mercado', 'ds_email', 'nu_cep', 'nm_endereco'];
+        $obrigatorios = ['nu_cnpj', 'nm_mercado', 'ds_email', 'nu_cep', 'nm_endereco', 'nu_numero'];
 
         foreach ($obrigatorios as $campo) {
             if (!isset($dados[$campo]) || trim((string) $dados[$campo]) === '') {
@@ -364,10 +400,16 @@ class MercadoController
             throw new InvalidArgumentException('Informe um e-mail válido.');
         }
 
+        $dados['nu_numero'] = trim((string) $dados['nu_numero']);
+
+        if (!preg_match('/^.{1,10}$/u', $dados['nu_numero'])) {
+            throw new InvalidArgumentException('Informe o número com até 10 caracteres (use S/N se não houver).');
+        }
+
+        $dados = array_merge($dados, $this->lerComplementoEndereco($dados));
+
         $dados['fl_motoboy'] = (bool) ($dados['fl_motoboy'] ?? false);
         $dados['ds_foto_mercado'] = (string) ($dados['ds_foto_mercado'] ?? '');
-        $dados['nu_latitude'] = (float) ($dados['nu_latitude'] ?? 0);
-        $dados['nu_longitude'] = (float) ($dados['nu_longitude'] ?? 0);
         $dados['nu_avg_nota'] = (float) ($dados['nu_avg_nota'] ?? 0);
         $dados['nul_avaliacoes'] = (int) ($dados['nul_avaliacoes'] ?? 0);
 

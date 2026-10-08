@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/telas/login.dart';
 import 'package:achei_barato/widgets/botao_primario.dart';
+import 'package:achei_barato/widgets/campos_endereco.dart';
 import 'package:achei_barato/widgets/tela_base.dart';
 
 class CadastroMercado extends StatefulWidget {
@@ -15,8 +16,7 @@ class _CadastroMercadoState extends State<CadastroMercado> {
   final _nomeController = TextEditingController();
   final _cnpjController = TextEditingController();
   final _emailController = TextEditingController();
-  final _cepController = TextEditingController();
-  final _enderecoController = TextEditingController();
+  final _endereco = EnderecoMercado();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
@@ -27,8 +27,7 @@ class _CadastroMercadoState extends State<CadastroMercado> {
     _nomeController.dispose();
     _cnpjController.dispose();
     _emailController.dispose();
-    _cepController.dispose();
-    _enderecoController.dispose();
+    _endereco.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
     super.dispose();
@@ -40,22 +39,25 @@ class _CadastroMercadoState extends State<CadastroMercado> {
       return;
     }
 
+    final erroEndereco = _endereco.validar();
+    if (erroEndereco != null) {
+      _mostrarMensagem(erroEndereco);
+      return;
+    }
+
     setState(() => _carregando = true);
 
     try {
+      await _endereco.resolverCoordenadas();
+
       await ApiService.post('mercados', {
         'nu_cnpj': _cnpjController.text,
         'nm_mercado': _nomeController.text.trim(),
         'ds_email': _emailController.text.trim(),
-        'nu_cep': _cepController.text,
-        'nm_endereco': _enderecoController.text.trim(),
+        ..._endereco.paraApi(),
         'ds_senha': _senhaController.text,
-
-        // Esses campos existem no ER, mas ainda não possuem campos na tela.
         'fl_motoboy': false,
         'ds_foto_mercado': '',
-        'nu_latitude': 0,
-        'nu_longitude': 0,
         'nu_avg_nota': 0,
         'nul_avaliacoes': 0,
       });
@@ -68,9 +70,7 @@ class _CadastroMercadoState extends State<CadastroMercado> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const Login(isUsuario: false),
-        ),
+        MaterialPageRoute(builder: (context) => const Login(isUsuario: false)),
       );
     } on ApiException catch (e) {
       _mostrarMensagem(e.mensagem);
@@ -83,9 +83,8 @@ class _CadastroMercadoState extends State<CadastroMercado> {
 
   void _mostrarMensagem(String mensagem) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   @override
@@ -126,24 +125,7 @@ class _CadastroMercadoState extends State<CadastroMercado> {
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _cepController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'CEP',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.location_on),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _enderecoController,
-          decoration: const InputDecoration(
-            labelText: 'Endereço',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.map),
-          ),
-        ),
+        CamposEndereco(endereco: _endereco),
         const SizedBox(height: 16),
         TextField(
           controller: _senhaController,
@@ -168,10 +150,7 @@ class _CadastroMercadoState extends State<CadastroMercado> {
         if (_carregando)
           const CircularProgressIndicator()
         else
-          BotaoPrimario(
-            texto: 'Cadastrar-se',
-            onPressed: _cadastrar,
-          ),
+          BotaoPrimario(texto: 'Cadastrar-se', onPressed: _cadastrar),
       ],
     );
   }

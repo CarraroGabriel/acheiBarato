@@ -376,7 +376,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${mercado['nm_endereco'] ?? ''}\nCEP ${mercado['nu_cep'] ?? ''}',
+                        _textoEndereco(mercado),
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade700,
@@ -529,6 +529,25 @@ class _PerfilMercadoState extends State<PerfilMercado> {
   String _formatarValor(dynamic valor) {
     final numero = double.tryParse(valor.toString().replaceAll(',', '.')) ?? 0;
     return 'R\$ ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  String _textoEndereco(Map<String, dynamic> mercado) {
+    final numero = (mercado['nu_numero'] ?? '').toString();
+    final bairro = (mercado['nm_bairro'] ?? '').toString();
+    final cidade = (mercado['nm_cidade'] ?? '').toString();
+    final uf = (mercado['sg_uf'] ?? '').toString();
+    final cep = (mercado['nu_cep'] ?? '').toString().padLeft(8, '0');
+
+    var linha1 = (mercado['nm_endereco'] ?? '').toString();
+    if (numero.isNotEmpty) linha1 += ', $numero';
+    if (bairro.isNotEmpty) linha1 += ' - $bairro';
+
+    final cepFormatado = '${cep.substring(0, 5)}-${cep.substring(5)}';
+    final linha2 = cidade.isEmpty
+        ? 'CEP $cepFormatado'
+        : '$cidade/$uf · CEP $cepFormatado';
+
+    return '$linha1\n$linha2';
   }
 
   String _textoTaxaEntrega(dynamic taxa) {

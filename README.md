@@ -29,19 +29,20 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Distância até os mercados** calculada pela localização do celular, quando o usuário permite
 
 ### Para o Lojista
-- **Cadastro do estabelecimento**
+- **Cadastro do estabelecimento** com **endereço preenchido pelo CEP** (rua, bairro, cidade e UF via ViaCEP; o lojista completa o número)
+- **Localização do mercado no mapa** — as coordenadas são obtidas pelo endereço ao salvar, ou pelo GPS com o botão "Usar minha localização atual", que também preenche o endereço (CEP, rua, número, bairro, cidade e UF) a partir da posição — útil quando o lojista está na loja
 - **Painel do lojista** — visão geral com produtos cadastrados, em promoção, disponíveis, com estoque baixo e indisponíveis, nota média, quantidade de favoritos e avisos de informações faltando (horário e foto)
 - **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria
 - **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes
 - **Edição de produto** — preço, estoque, disponibilidade, promoção com percentual de desconto e prazo de término, e foto do produto
-- **Perfil do mercado** — foto do estabelecimento, nome, e-mail, endereço/CEP, tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
+- **Perfil do mercado** — foto do estabelecimento, nome, e-mail, endereço completo (CEP, rua, número, bairro, cidade e UF), tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
 
 ### Imagens
 - **Fotos pela câmera ou galeria** do celular, reduzidas no app antes do envio e salvas no servidor (`public/uploads`); o banco guarda apenas o caminho do arquivo, com nome padronizado `{id}-{nome}.jpg` (ex.: `17-arroz-branco-5-kg-tio-joao.jpg`)
 - **Imagem padrão dos produtos** incluída no app (`assets/produtos`, 512×512 px) e ligada pelo banco, usada quando o mercado não envia foto — ilustrações geradas com IA (Google Gemini)
 - Ordem de exibição de um produto: foto enviada → imagem padrão → ícone
 
-> 🔧 **Geolocalização** (mapa na tela principal e coordenadas dos mercados para o cálculo de distância) está prevista para implementação até o fim do mês de Outubro de 2026.
+> 🔧 O **mapa na tela principal** está previsto para implementação até o fim do mês de Outubro de 2026. As coordenadas dos mercados já são salvas no cadastro e na edição do perfil.
 
 ---
 
@@ -79,7 +80,8 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Frontend / Mobile | [Flutter](https://flutter.dev) + Dart |
 | Backend | PHP (API REST) |
 | Banco de Dados | PostgreSQL |
-| Localização | [geolocator](https://pub.dev/packages/geolocator) |
+| Localização | [geolocator](https://pub.dev/packages/geolocator) (posição do aparelho) e [Nominatim/OpenStreetMap](https://nominatim.org) (endereço → coordenadas, sem chave) |
+| Endereço pelo CEP | [ViaCEP](https://viacep.com.br) (gratuita, sem chave) |
 | Fotos (câmera/galeria) | [image_picker](https://pub.dev/packages/image_picker) |
 | Notificações *(previsto)* | Firebase Cloud Messaging |
 
@@ -91,5 +93,5 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 
 Atualmente está prevista a implementação de:
 
-- 📍 **Integração com geolocalização** — mapa na tela principal, localização do usuário e coordenadas dos mercados para exibir distâncias e filtrar mercados próximos
+- 📍 **Mapa na tela principal** — posição do usuário e dos mercados (flutter_map + OpenStreetMap), aproveitando as coordenadas já salvas no cadastro dos mercados
 - 🔔 **Notificações com Firebase** — aviso ao usuário quando um produto favoritado entrar em promoção (a relação de produtos favoritos já está pronta no banco)

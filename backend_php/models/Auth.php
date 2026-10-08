@@ -35,7 +35,7 @@ class Auth
 
     public function loginMercado(string $cnpj, string $senha): ?array
     {
-        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco,
+        $sql = 'SELECT id_mercado, nu_cnpj, nm_mercado, ds_email, nu_cep, nm_endereco, nu_numero, nm_bairro, nm_cidade, sg_uf,
                        fl_motoboy, ds_foto_mercado, nu_latitude, nu_longitude,
                        nu_avg_nota, nul_avaliacoes, ds_senha
                 FROM tb_mercado

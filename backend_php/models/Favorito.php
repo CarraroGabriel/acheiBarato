@@ -15,7 +15,7 @@ class Favorito
 
     public function listarMercados(int $idUsuario): array
     {
-        $sql = 'SELECT m.id_mercado, m.nm_mercado, m.nm_endereco, m.ds_foto_mercado,
+        $sql = 'SELECT m.id_mercado, m.nm_mercado, m.nm_endereco, m.nu_numero, m.nm_bairro, m.nm_cidade, m.sg_uf, m.ds_foto_mercado,
                        m.fl_motoboy, m.nu_taxa_entrega, m.nu_avg_nota, m.nul_avaliacoes,
                        m.nu_latitude, m.nu_longitude,
                        (SELECT COUNT(*)
@@ -50,6 +50,10 @@ class Favorito
                 'id_mercado'      => $id,
                 'nm_mercado'      => $m['nm_mercado'],
                 'nm_endereco'     => $m['nm_endereco'],
+                'nu_numero'       => $m['nu_numero'],
+                'nm_bairro'       => $m['nm_bairro'],
+                'nm_cidade'       => $m['nm_cidade'],
+                'sg_uf'           => $m['sg_uf'],
                 'ds_foto_mercado' => $m['ds_foto_mercado'],
                 'fl_motoboy'      => $this->paraBool($m['fl_motoboy']),
                 'nu_taxa_entrega' => (float) $m['nu_taxa_entrega'],
