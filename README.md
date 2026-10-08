@@ -38,7 +38,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 
 ### Imagens
 - **Fotos pela câmera ou galeria** do celular, reduzidas no app antes do envio e salvas no servidor (`public/uploads`); o banco guarda apenas o caminho do arquivo, com nome padronizado `{id}-{nome}.jpg` (ex.: `17-arroz-branco-5-kg-tio-joao.jpg`)
-- **Imagem padrão dos produtos** incluída no app (`assets/produtos`) e ligada pelo banco, usada quando o mercado não envia foto
+- **Imagem padrão dos produtos** incluída no app (`assets/produtos`, 512×512 px) e ligada pelo banco, usada quando o mercado não envia foto — ilustrações geradas com IA (Google Gemini)
 - Ordem de exibição de um produto: foto enviada → imagem padrão → ícone
 
 > 🔧 **Geolocalização** (mapa na tela principal e coordenadas dos mercados para o cálculo de distância) está prevista para implementação até o fim do mês de Outubro de 2026.
@@ -93,4 +93,3 @@ Atualmente está prevista a implementação de:
 
 - 📍 **Integração com geolocalização** — mapa na tela principal, localização do usuário e coordenadas dos mercados para exibir distâncias e filtrar mercados próximos
 - 🔔 **Notificações com Firebase** — aviso ao usuário quando um produto favoritado entrar em promoção (a relação de produtos favoritos já está pronta no banco)
-- 🖼️ **Imagens padrão dos produtos** — o envio de fotos já está implementado; falta adicionar as ilustrações dos produtos do catálogo em `app_flutter/assets/produtos`
