@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/telas/escolher_localizacao.dart';
+import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
 import 'package:achei_barato/widgets/editor_horarios.dart';
 import 'package:achei_barato/widgets/imagem_app.dart';
+import 'package:achei_barato/widgets/mapa_mercados.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
@@ -29,9 +32,96 @@ class _HomeUsuarioState extends State<HomeUsuario> {
   List<Map<String, dynamic>> _mercados = [];
   List<Map<String, dynamic>> _produtosDestaque = [];
 
+  PosicaoUsuario? _posicao = LocalizacaoService.posicaoAtual;
+  String? _descricaoLocal;
+  bool _buscandoLocal = false;
+
   @override
   void initState() {
     super.initState();
+    _carregarDados();
+    _carregarLocalizacao();
+  }
+
+  Future<void> _carregarLocalizacao({bool atualizar = false}) async {
+    setState(() => _buscandoLocal = true);
+
+    final posicao = await LocalizacaoService.obterPosicao(atualizar: atualizar);
+    if (!mounted) return;
+
+    setState(() {
+      _posicao = posicao;
+      _descricaoLocal = null;
+      _buscandoLocal = false;
+    });
+
+    if (atualizar && posicao == null) {
+      _mostrarMensagem(
+        'Não foi possível obter a localização. Verifique se o GPS e a permissão estão ativos.',
+      );
+    }
+
+    if (posicao != null) {
+      final descricao = await LocalizacaoService.descreverPosicao();
+      if (mounted) setState(() => _descricaoLocal = descricao);
+    }
+  }
+
+  Future<void> _alterarLocalizacao() async {
+    final alterou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const EscolherLocalizacao()),
+    );
+    if (alterou != true || !mounted) return;
+
+    setState(() {
+      _posicao = LocalizacaoService.posicaoAtual;
+      _descricaoLocal = null;
+    });
+    final descricao = await LocalizacaoService.descreverPosicao();
+    if (mounted) setState(() => _descricaoLocal = descricao);
+  }
+
+  void _mostrarMensagem(String mensagem) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  double? _distancia(Map<String, dynamic> mercado) {
+    return LocalizacaoService.distanciaMetros(
+      _posicao,
+      double.tryParse('${mercado['nu_latitude']}') ?? 0,
+      double.tryParse('${mercado['nu_longitude']}') ?? 0,
+    );
+  }
+
+  // Mais próximos primeiro; mercados sem localização vão para o fim.
+  List<Map<String, dynamic>> get _mercadosOrdenados {
+    if (_posicao == null) return _mercados;
+    return [..._mercados]..sort(
+      (a, b) => (_distancia(a) ?? double.infinity).compareTo(
+        _distancia(b) ?? double.infinity,
+      ),
+    );
+  }
+
+  String get _textoLocal {
+    if (_buscandoLocal) return 'Obtendo sua localização...';
+    if (_posicao == null) return 'Escolha sua localização';
+    return _descricaoLocal ?? 'Sua localização atual';
+  }
+
+  Future<void> _abrirMercado(Map<String, dynamic> mercado) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PerfilMercado(
+          idMercado: _toInt(mercado['id_mercado']),
+          idUsuario: widget.idUsuario,
+        ),
+      ),
+    );
     _carregarDados();
   }
 
@@ -107,17 +197,19 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                   children: [
                     const Icon(Icons.location_on, color: Colors.red, size: 20),
                     const SizedBox(width: 6),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Localização do usuário — integração GPS pendente',
-                        style: TextStyle(
+                        _textoLocal,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: _buscandoLocal ? null : _alterarLocalizacao,
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red,
                         padding: EdgeInsets.zero,
@@ -130,35 +222,12 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                   ],
                 ),
               ),
-              Container(
+              SizedBox(
                 height: 260,
-                color: Colors.grey.shade300,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.map,
-                            size: 48,
-                            color: Colors.grey.shade500,
-                          ),
-                          Text(
-                            'Mapa será integrado na etapa de geolocalização',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Center(
-                      child: Icon(
-                        Icons.my_location,
-                        color: Colors.red,
-                        size: 34,
-                      ),
-                    ),
-                  ],
+                child: MapaMercados(
+                  posicao: _posicao,
+                  mercados: _mercados,
+                  aoAbrirMercado: _abrirMercado,
                 ),
               ),
               const SizedBox(height: 16),
@@ -190,11 +259,11 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                           height: 160,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            itemCount: _mercados.length,
+                            itemCount: _mercadosOrdenados.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: 12),
                             itemBuilder: (_, i) =>
-                                _buildCardMercado(_mercados[i]),
+                                _buildCardMercado(_mercadosOrdenados[i]),
                           ),
                         ),
                     ],
@@ -302,19 +371,10 @@ class _HomeUsuarioState extends State<HomeUsuario> {
   }
 
   Widget _buildCardMercado(Map<String, dynamic> mercado) {
+    final distancia = _distancia(mercado);
+
     return GestureDetector(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PerfilMercado(
-              idMercado: _toInt(mercado['id_mercado']),
-              idUsuario: widget.idUsuario,
-            ),
-          ),
-        );
-        _carregarDados();
-      },
+      onTap: () => _abrirMercado(mercado),
       child: Container(
         width: 160,
         decoration: BoxDecoration(
@@ -363,14 +423,16 @@ class _HomeUsuarioState extends State<HomeUsuario> {
                   style: const TextStyle(fontSize: 11),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.location_on, color: Colors.grey.shade400, size: 13),
+                const Icon(Icons.location_on, color: Colors.red, size: 13),
                 const SizedBox(width: 2),
                 Expanded(
                   child: Text(
-                    'distância pendente',
+                    distancia == null
+                        ? 'sem localização'
+                        : LocalizacaoService.formatar(distancia),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                    style: const TextStyle(fontSize: 11, color: Colors.black87),
                   ),
                 ),
               ],

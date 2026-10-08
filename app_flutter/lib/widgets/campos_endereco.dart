@@ -13,7 +13,6 @@ class EnderecoMercado {
   double latitude = 0;
   double longitude = 0;
 
-  // true quando o lojista usou "Usar minha localização atual".
   bool localizacaoPeloGps = false;
 
   // Último CEP consultado, para não repetir a consulta na ViaCEP.
@@ -25,10 +24,10 @@ class EnderecoMercado {
     numero.text = (mercado['nu_numero'] ?? '').toString();
     bairro.text = (mercado['nm_bairro'] ?? '').toString();
     cidade.text = (mercado['nm_cidade'] ?? '').toString();
-    uf.text = (mercado['sg_uf'] ?? '').toString().trim(); // CHAR(2) vem com espaços
+    // CHAR(2) no banco: a UF vazia vem como dois espaços.
+    uf.text = (mercado['sg_uf'] ?? '').toString().trim();
     latitude = double.tryParse('${mercado['nu_latitude']}') ?? 0;
     longitude = double.tryParse('${mercado['nu_longitude']}') ?? 0;
-    // Mercados cadastrados antes do bairro/cidade/UF: o CEP é consultado ao abrir.
     _cepConsultado = cidade.text.isEmpty ? '' : cep.text;
   }
 
@@ -49,7 +48,6 @@ class EnderecoMercado {
     return null;
   }
 
-  // Se não encontrar, mantém as coordenadas anteriores e retorna false.
   Future<bool> resolverCoordenadas() async {
     if (localizacaoPeloGps) return true;
 
@@ -157,7 +155,7 @@ class _CamposEnderecoState extends State<CamposEndereco> {
   Future<void> _usarLocalizacaoAtual() async {
     setState(() => _buscandoGps = true);
 
-    final posicao = await LocalizacaoService.obterPosicao();
+    final posicao = await LocalizacaoService.obterPosicao(atualizar: true);
     if (!mounted) return;
 
     if (posicao == null) {

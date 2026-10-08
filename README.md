@@ -26,7 +26,9 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Detalhes do mercado** — endereço, tele-entrega e taxa de entrega, horário de funcionamento (com "aberto agora"), nota média e produtos disponíveis
 - **Avaliação de mercados** — nota de 1 a 5 estrelas (uma por usuário, podendo ser alterada)
 - **Perfil** — edição de nome e e-mail e exclusão da conta
-- **Distância até os mercados** calculada pela localização do celular, quando o usuário permite
+- **Localização do usuário** pelo GPS do celular ou escolhida como no iFood: **busca pelo nome da rua** ou **pino no mapa** (arrastando o mapa até o local), útil para quem não quer compartilhar a localização ou quer ver mercados perto de outro endereço; a posição é compartilhada entre as telas enquanto o app está aberto
+- **Mapa na tela principal** com a posição do usuário e os mercados como pontos, enquadrando os mais próximos; tocar em um mercado mostra a distância e abre seus detalhes
+- **Distância até os mercados** e mercados mais próximos primeiro
 
 ### Para o Lojista
 - **Cadastro do estabelecimento** com **endereço preenchido pelo CEP** (rua, bairro, cidade e UF via ViaCEP; o lojista completa o número)
@@ -41,8 +43,6 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Fotos pela câmera ou galeria** do celular, reduzidas no app antes do envio e salvas no servidor (`public/uploads`); o banco guarda apenas o caminho do arquivo, com nome padronizado `{id}-{nome}.jpg` (ex.: `17-arroz-branco-5-kg-tio-joao.jpg`)
 - **Imagem padrão dos produtos** incluída no app (`assets/produtos`, 512×512 px) e ligada pelo banco, usada quando o mercado não envia foto — ilustrações geradas com IA (Google Gemini)
 - Ordem de exibição de um produto: foto enviada → imagem padrão → ícone
-
-> 🔧 O **mapa na tela principal** está previsto para implementação até o fim do mês de Outubro de 2026. As coordenadas dos mercados já são salvas no cadastro e na edição do perfil.
 
 ---
 
@@ -59,7 +59,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Tela | Descrição | Situação |
 |---|---|---|
 | Login / Cadastro | Acesso e cadastro de clientes e lojistas | ✅ Implementada |
-| Tela Principal (Usuário) | Mercados (com aberto/fechado), promoções em destaque e menu lateral | ✅ Implementada (mapa previsto na geolocalização) |
+| Tela Principal (Usuário) | Localização do usuário, mapa com os mercados, mercados mais próximos (com distância e aberto/fechado), promoções em destaque e menu lateral | ✅ Implementada |
 | Buscar | Pesquisa de produtos e mercados com filtros e ordenação | ✅ Implementada |
 | Produto / Comparação de Preços | Mercados que vendem o produto, melhor preço e favorito | ✅ Implementada |
 | Detalhes do Mercado | Endereço, horário, tele-entrega, avaliação e produtos | ✅ Implementada |
@@ -81,6 +81,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Backend | PHP (API REST) |
 | Banco de Dados | PostgreSQL |
 | Localização | [geolocator](https://pub.dev/packages/geolocator) (posição do aparelho) e [Nominatim/OpenStreetMap](https://nominatim.org) (endereço → coordenadas, sem chave) |
+| Mapa | [flutter_map](https://pub.dev/packages/flutter_map) + mapas do [OpenStreetMap](https://www.openstreetmap.org) (sem chave) |
 | Endereço pelo CEP | [ViaCEP](https://viacep.com.br) (gratuita, sem chave) |
 | Fotos (câmera/galeria) | [image_picker](https://pub.dev/packages/image_picker) |
 | Notificações *(previsto)* | Firebase Cloud Messaging |
@@ -93,5 +94,4 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 
 Atualmente está prevista a implementação de:
 
-- 📍 **Mapa na tela principal** — posição do usuário e dos mercados (flutter_map + OpenStreetMap), aproveitando as coordenadas já salvas no cadastro dos mercados
 - 🔔 **Notificações com Firebase** — aviso ao usuário quando um produto favoritado entrar em promoção (a relação de produtos favoritos já está pronta no banco)
