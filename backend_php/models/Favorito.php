@@ -76,7 +76,8 @@ class Favorito
         $sql = 'SELECT ip.id_item_produto, ip.id_produto, ip.nm_produto, ip.nm_marca,
                        ip.nm_categoria AS ds_categoria, ip.ds_foto_produto, ip.ds_imagem_padrao, ip.ds_item_produto,
                        pm.id_produto_mercado, pm.nu_valor, pm.nu_qtde,
-                       pm.fl_disponivel, pm.dt_atualizacao,
+                       pm.fl_disponivel,
+                       TO_CHAR(pm.dt_atualizacao AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS"Z"\') AS dt_atualizacao,
                        ' . ProdutoMercado::SQL_CAMPOS_PROMOCAO . ',
                        m.id_mercado, m.nm_mercado, m.nu_latitude, m.nu_longitude, m.fl_motoboy
                 FROM tb_produto_favorito pf

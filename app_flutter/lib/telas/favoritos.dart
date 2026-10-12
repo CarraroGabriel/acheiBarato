@@ -4,6 +4,7 @@ import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/bottomnav_usuarios.dart';
+import 'package:achei_barato/widgets/info_oferta.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
@@ -316,12 +317,13 @@ class _FavoritosState extends State<Favoritos> {
                   ? '1 oferta'
                   : '$qtPromocoes ofertas',
             ),
-            if (distancia != null) ...[
+            if (_posicao != null) ...[
               const SizedBox(height: 4),
-              _buildLinhaInfo(
-                Icons.location_on,
-                Colors.grey.shade600,
-                LocalizacaoService.formatar(distancia),
+              TextoDistancia(
+                distancia == null
+                    ? 'sem localização'
+                    : LocalizacaoService.formatar(distancia),
+                tamanhoFonte: 12,
               ),
             ],
           ],
@@ -417,6 +419,24 @@ class _FavoritosState extends State<Favoritos> {
                       color: corTexto,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 2,
+                    children: [
+                      if (_posicao != null)
+                        TextoDistancia(
+                          distancia == null
+                              ? 'sem localização'
+                              : LocalizacaoService.formatar(distancia),
+                          tamanhoFonte: 12,
+                        ),
+                      TextoAtualizacao(
+                        item['dt_atualizacao'],
+                        tamanhoFonte: 12,
+                      ),
+                    ],
+                  ),
                   if (melhorPreco || promocao || !disponivel) ...[
                     const SizedBox(height: 6),
                     Wrap(
@@ -444,25 +464,13 @@ class _FavoritosState extends State<Favoritos> {
               ),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatarValor(item['nu_valor_final'] ?? item['nu_valor']),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: disponivel ? Colors.red : Colors.grey,
-                  ),
-                ),
-                if (distancia != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    LocalizacaoService.formatar(distancia),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ],
+            Text(
+              _formatarValor(item['nu_valor_final'] ?? item['nu_valor']),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: disponivel ? Colors.red : Colors.grey,
+              ),
             ),
           ],
         ),

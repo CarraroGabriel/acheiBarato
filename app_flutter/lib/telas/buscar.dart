@@ -897,24 +897,43 @@ class _BuscarState extends State<Buscar> with SingleTickerProviderStateMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      (mercado['nm_mercado'] ?? '').toString(),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            (mercado['nm_mercado'] ?? '').toString(),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (_posicao != null) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.location_on,
+                            size: 15,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            distancia == null
+                                ? 'sem localização'
+                                : LocalizacaoService.formatar(distancia),
+                            style: TextStyle(
+                              fontSize: distancia == null ? 11 : 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 12,
                       runSpacing: 4,
                       children: [
-                        if (distancia != null)
-                          _buildInfo(
-                            Icons.location_on,
-                            LocalizacaoService.formatar(distancia),
-                            Colors.grey.shade700,
-                          ),
                         _buildInfo(
                           Icons.star,
                           avaliacoes == 0

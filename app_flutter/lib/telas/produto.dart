@@ -4,6 +4,7 @@ import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/imagem_app.dart';
+import 'package:achei_barato/widgets/info_oferta.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class ProdutoTela extends StatefulWidget {
@@ -355,14 +356,20 @@ class _ProdutoTelaState extends State<ProdutoTela> {
                     _buildSelo('MELHOR PREÇO', Colors.green.shade700),
                 ],
               ),
-              if (distancia != null) ...[
-                const SizedBox(height: 6),
-                _buildLinhaInfo(
-                  Icons.location_on,
-                  LocalizacaoService.formatar(distancia),
-                  Colors.grey.shade700,
-                ),
-              ],
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 14,
+                runSpacing: 4,
+                children: [
+                  if (_posicao != null)
+                    TextoDistancia(
+                      distancia == null
+                          ? 'sem localização'
+                          : LocalizacaoService.formatar(distancia),
+                    ),
+                  TextoAtualizacao(mercado['dt_atualizacao']),
+                ],
+              ),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,

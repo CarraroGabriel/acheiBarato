@@ -17,12 +17,12 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 ### Para o Usuário
 - **Cadastro e login** de clientes
 - **Busca de produtos** com filtros por categoria, marca, faixa de preço e promoção, e ordenação por relevância, menor preço, maior preço ou nome
-- **Comparação de preços** — tela do produto com todos os mercados que o vendem, do menor para o maior preço, destacando o **melhor preço**, a promoção e a tele-entrega de cada um
-- **Busca de mercados** com filtros por distância (raio), tele-entrega, avaliação mínima e mercados com promoções
+- **Comparação de preços** — tela do produto com todos os mercados que o vendem, do menor para o maior preço, destacando o **melhor preço**, a promoção, a **distância**, a **última atualização do preço** ("hoje, 14h") e a tele-entrega de cada um
+- **Busca de mercados** com a distância de cada um e filtros por distância (raio), tele-entrega, avaliação mínima e mercados com promoções
 - **Promoções em destaque** na tela principal, com as dos mercados favoritos primeiro
 - **Mercado aberto ou fechado** nos cards da tela principal, de acordo com o horário de funcionamento
 - **Tempo restante da promoção** — contagem regressiva ("Termina em 2h 35min") quando o mercado define um prazo
-- **Favoritos** — mercados e produtos favoritos, com indicação de melhor preço entre os mercados
+- **Favoritos** — mercados e produtos favoritos, com indicação de melhor preço entre os mercados, distância e última atualização do preço
 - **Detalhes do mercado** — endereço, tele-entrega e taxa de entrega, horário de funcionamento (com "aberto agora"), nota média e produtos disponíveis
 - **Avaliação de mercados** — nota de 1 a 5 estrelas (uma por usuário, podendo ser alterada)
 - **Perfil** — edição de nome e e-mail e exclusão da conta

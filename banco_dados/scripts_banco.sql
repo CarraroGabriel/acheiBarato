@@ -148,7 +148,7 @@ CREATE TABLE Tb_Produto_Mercado (
                 nu_qtde INTEGER NOT NULL,
                 fl_promocao BOOLEAN NOT NULL,
                 fl_disponivel BOOLEAN NOT NULL,
-                dt_atualizacao DATE NOT NULL,
+                dt_atualizacao TIMESTAMPTZ NOT NULL, -- data e hora da última alteração de preço/estoque
                 nu_desconto INTEGER NOT NULL DEFAULT 0,
                 dt_fim_promocao TIMESTAMPTZ, -- término da promoção; nulo = sem prazo
                 CONSTRAINT pk_produto_mercado PRIMARY KEY (id_produto_mercado),
@@ -160,7 +160,7 @@ ALTER TABLE tb_produto_mercado
     ALTER COLUMN id_produto_mercado SET DEFAULT nextval('sq_tb_produto_mercado');
 
 ALTER TABLE tb_produto_mercado
-    ALTER COLUMN dt_atualizacao SET DEFAULT CURRENT_DATE;
+    ALTER COLUMN dt_atualizacao SET DEFAULT NOW();
 
 /* Alteração visando o erro de promoção sobre valor de promoção */
 

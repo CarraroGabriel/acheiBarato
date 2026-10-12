@@ -110,7 +110,7 @@ class ProdutoMercado
             $sql = 'INSERT INTO tb_produto_mercado
                         (id_item_produto, id_mercado, nu_valor, nu_qtde, fl_promocao, fl_disponivel, dt_atualizacao)
                     VALUES
-                        (:id_item_produto, :id_mercado, :nu_valor, :nu_qtde, :fl_promocao, :fl_disponivel, CURRENT_DATE)
+                        (:id_item_produto, :id_mercado, :nu_valor, :nu_qtde, :fl_promocao, :fl_disponivel, NOW())
                     RETURNING id_produto_mercado';
 
             $stmt = $this->conexao->prepare($sql);
@@ -304,7 +304,9 @@ class ProdutoMercado
         $stmt = $this->conexao->prepare(
             'SELECT pm.id_produto_mercado, m.id_mercado, m.nm_mercado, m.ds_foto_mercado,
                     m.nu_latitude, m.nu_longitude, m.fl_motoboy, m.nu_taxa_entrega,
-                    pm.nu_valor, pm.fl_disponivel, ' . self::SQL_CAMPOS_PROMOCAO . '
+                    pm.nu_valor, pm.fl_disponivel,
+                    TO_CHAR(pm.dt_atualizacao AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS"Z"\') AS dt_atualizacao,
+                    ' . self::SQL_CAMPOS_PROMOCAO . '
              FROM tb_produto_mercado pm
              INNER JOIN tb_mercado m ON m.id_mercado = pm.id_mercado
              WHERE pm.id_item_produto = :id_item_produto
@@ -331,6 +333,7 @@ class ProdutoMercado
                 ? null
                 : (int) $m['nu_segundos_restantes'],
             'fl_disponivel' => self::paraBool($m['fl_disponivel']),
+            'dt_atualizacao' => $m['dt_atualizacao'],
         ], $stmt->fetchAll());
 
         $mercados = self::marcarMelhorPreco($mercados);
