@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Distância do mercado: ícone vermelho e texto preto (padrão do app).
 class TextoDistancia extends StatelessWidget {
   final String texto;
   final double tamanhoFonte;
@@ -23,15 +22,12 @@ class TextoDistancia extends StatelessWidget {
   }
 }
 
-// "Atualizado hoje, 14h" a partir do dt_atualizacao da oferta.
 class TextoAtualizacao extends StatelessWidget {
   final dynamic data;
   final double tamanhoFonte;
 
   const TextoAtualizacao(this.data, {super.key, this.tamanhoFonte = 13});
 
-  // "hoje, 14h", "ontem, 18h30", "10/10, 9h" ou "10/10/2025".
-  // Registros antigos (só data, sem hora) aparecem sem o horário.
   static String? formatar(dynamic valor) {
     final data = DateTime.tryParse('${valor ?? ''}')?.toLocal();
     if (data == null) return null;

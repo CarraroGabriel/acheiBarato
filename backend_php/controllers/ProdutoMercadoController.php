@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../models/ProdutoMercado.php';
 require_once __DIR__ . '/../helpers/Response.php';
 require_once __DIR__ . '/../helpers/Imagem.php';
+require_once __DIR__ . '/../helpers/Notificador.php';
 
 class ProdutoMercadoController
 {
@@ -93,11 +94,14 @@ class ProdutoMercadoController
                 ? $this->lerFimPromocao($dados['dt_fim_promocao'] ?? null)
                 : null;
 
+            $antes = $this->produtoMercado->consultarPorId($idProdutoMercado);
             $resultado = $this->produtoMercado->alterar($idProdutoMercado, $dados);
 
-            if ($resultado === null) {
+            if ($antes === null || $resultado === null) {
                 Response::json(false, 'Produto do mercado não encontrado.', null, 404);
             }
+
+            Notificador::aposAlterarOferta($antes, $resultado);
 
             Response::json(true, 'Produto alterado com sucesso.', $resultado, 200);
         } catch (InvalidArgumentException $e) {

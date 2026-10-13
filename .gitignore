@@ -11,6 +11,9 @@
 # 2. BACKEND PHP
 # ==========================================
 backend_php/.env
+# Chave privada da conta de serviço do Firebase (nunca versionar)
+backend_php/config/firebase-chave.json
+*firebase-adminsdk*.json
 
 # ==========================================
 # 3. FLUTTER / DART (Caminhos ajustados para a subpasta)

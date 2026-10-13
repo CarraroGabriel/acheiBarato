@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/services/notificacao_service.dart';
 import 'package:achei_barato/telas/login.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/botao_excluir_conta.dart';
@@ -102,6 +103,7 @@ class _EditarUsuarioState extends State<EditarUsuario> {
 
       if (!mounted) return;
 
+      NotificacaoService.sair();
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Conta excluída.')));
       Navigator.pushAndRemoveUntil(

@@ -1,5 +1,7 @@
 plugins {
     id("com.android.application")
+    // Firebase: as bibliotecas vêm pelos pacotes Flutter (firebase_core / firebase_messaging).
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }

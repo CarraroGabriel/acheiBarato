@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/telas/editar_mercado.dart';
 import 'package:achei_barato/telas/editar_usuario.dart';
+import 'package:achei_barato/services/notificacao_service.dart';
 import 'package:achei_barato/telas/login.dart';
 
 class MenuLateral extends StatelessWidget {
@@ -84,6 +85,7 @@ class MenuLateral extends StatelessWidget {
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Sair', style: TextStyle(color: Colors.red)),
             onTap: () {
+              NotificacaoService.sair();
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => Login(isUsuario: isUsuario)),

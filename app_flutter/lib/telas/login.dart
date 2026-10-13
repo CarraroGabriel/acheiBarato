@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/services/notificacao_service.dart';
 import 'package:achei_barato/telas/cadastro_mercado.dart';
 import 'package:achei_barato/telas/cadastro_usuario.dart';
 import 'package:achei_barato/telas/home_mercado.dart';
@@ -58,27 +59,31 @@ class _LoginState extends State<Login> {
       final dados = Map<String, dynamic>.from(resposta['dados'] as Map);
 
       if (_isUsuario) {
+        final idUsuario = _toInt(dados['id_usuario']);
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (_) => HomeUsuario(
-              idUsuario: _toInt(dados['id_usuario']),
+              idUsuario: idUsuario,
               nomeUsuario: (dados['nm_usuario'] ?? 'Usuário').toString(),
             ),
           ),
           (_) => false,
         );
+        NotificacaoService.entrarComoUsuario(idUsuario);
       } else {
+        final idMercado = _toInt(dados['id_mercado']);
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (_) => HomeMercado(
-              idMercado: _toInt(dados['id_mercado']),
+              idMercado: idMercado,
               nomeMercado: (dados['nm_mercado'] ?? 'Mercado').toString(),
             ),
           ),
           (_) => false,
         );
+        NotificacaoService.entrarComoMercado(idMercado);
       }
     } on ApiException catch (e) {
       _mostrarMensagem(e.mensagem);

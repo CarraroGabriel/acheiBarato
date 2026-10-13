@@ -9,6 +9,7 @@ import 'package:achei_barato/widgets/editor_horarios.dart';
 import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/mapa_mercados.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
+import 'package:achei_barato/widgets/sino_notificacoes.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class HomeUsuario extends StatefulWidget {
@@ -168,12 +169,7 @@ class _HomeUsuarioState extends State<HomeUsuario> {
       appBar: AcheiBaratoAppBar(
         exibirBotaoVoltar: false,
         exibirMenu: true,
-        acoes: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
+        acoes: const [SinoNotificacoes()],
       ),
       drawer: MenuLateral(
         nome: _nomeUsuario,

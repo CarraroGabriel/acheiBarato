@@ -1,3 +1,9 @@
+# Bloqueia o acesso a arquivos sensíveis: ocultos (.env, .htaccess)
+# e chaves .json (ex.: config/firebase-chave.json).
+<FilesMatch "(^\.|\.json$)">
+    Require all denied
+</FilesMatch>
+
 RewriteEngine On
 
 RewriteCond %{REQUEST_FILENAME} !-f

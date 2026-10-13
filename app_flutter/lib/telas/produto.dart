@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/services/notificacao_service.dart';
 import 'package:achei_barato/services/localizacao_service.dart';
 import 'package:achei_barato/telas/perfil_mercado.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
@@ -110,6 +111,7 @@ class _ProdutoTelaState extends State<ProdutoTela> {
         });
       }
 
+      NotificacaoService.seguirItem(widget.idItemProduto, !_favorito);
       if (!mounted) return;
       setState(() => _favorito = !_favorito);
       _mostrarMensagem(

@@ -266,6 +266,37 @@ ALTER TABLE tb_horario_mercado
 CREATE INDEX IF NOT EXISTS tb_horario_mercado_idx ON tb_horario_mercado (id_mercado, nu_dia_semana);
 
 
+/* Histórico de notificações (sino do app). O envio do push é feito pelo
+Firebase Cloud Messaging por tópicos (mercado_{id}, item_{id}, lojista_{id}).
+Destinatário: um usuário OU um mercado.
+Tipos: PROMOCAO_MERCADO_FAVORITO e PROMOCAO_PRODUTO_FAVORITO (usuário);
+ESTOQUE_BAIXO e PRODUTO_INDISPONIVEL (mercado). */
+
+CREATE TABLE Tb_Notificacao (
+                id_notificacao INTEGER NOT NULL,
+                id_usuario INTEGER,
+                id_mercado INTEGER,
+                tp_notificacao VARCHAR(25) NOT NULL,
+                id_produto_mercado INTEGER, -- oferta que gerou o aviso
+                ds_titulo VARCHAR(60) NOT NULL,
+                ds_mensagem VARCHAR(200) NOT NULL,
+                fl_lida BOOLEAN NOT NULL DEFAULT FALSE,
+                dt_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT pk_notificacao PRIMARY KEY (id_notificacao),
+                CONSTRAINT ck_notificacao_destinatario CHECK ((id_usuario IS NULL) <> (id_mercado IS NULL)),
+                CONSTRAINT ck_notificacao_tipo CHECK (tp_notificacao IN (
+                    'PROMOCAO_MERCADO_FAVORITO', 'PROMOCAO_PRODUTO_FAVORITO',
+                    'ESTOQUE_BAIXO', 'PRODUTO_INDISPONIVEL'))
+);
+
+CREATE SEQUENCE IF NOT EXISTS sq_tb_notificacao START 1;
+ALTER TABLE tb_notificacao
+    ALTER COLUMN id_notificacao SET DEFAULT nextval('sq_tb_notificacao');
+
+CREATE INDEX IF NOT EXISTS tb_notificacao_usuario_idx ON tb_notificacao (id_usuario, dt_criacao DESC);
+CREATE INDEX IF NOT EXISTS tb_notificacao_mercado_idx ON tb_notificacao (id_mercado, dt_criacao DESC);
+
+
 -- Chaves estrangeiras
 
 ALTER TABLE Tb_Produto ADD CONSTRAINT tb_categoria_tb_produto_fk
@@ -331,6 +362,19 @@ REFERENCES Tb_Usuario (id_usuario);
 ALTER TABLE Tb_Avaliacao_Mercado ADD CONSTRAINT tb_usuario_tb_avaliacao_mercado_fk
 FOREIGN KEY (id_usuario)
 REFERENCES Tb_Usuario (id_usuario);
+
+-- Notificações: excluir a conta ou a oferta remove os avisos ligados a ela.
+ALTER TABLE Tb_Notificacao ADD CONSTRAINT tb_usuario_tb_notificacao_fk
+FOREIGN KEY (id_usuario)
+REFERENCES Tb_Usuario (id_usuario) ON DELETE CASCADE;
+
+ALTER TABLE Tb_Notificacao ADD CONSTRAINT tb_mercado_tb_notificacao_fk
+FOREIGN KEY (id_mercado)
+REFERENCES Tb_Mercado (id_mercado) ON DELETE CASCADE;
+
+ALTER TABLE Tb_Notificacao ADD CONSTRAINT tb_produto_mercado_tb_notificacao_fk
+FOREIGN KEY (id_produto_mercado)
+REFERENCES Tb_Produto_Mercado (id_produto_mercado) ON DELETE CASCADE;
 
 
 /* View com a descrição completa do item, usada pelas consultas da API.

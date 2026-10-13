@@ -21,6 +21,7 @@ require_once __DIR__ . '/../routes/mercado_favorito_routes.php';
 require_once __DIR__ . '/../routes/produto_favorito_routes.php';
 require_once __DIR__ . '/../routes/favorito_routes.php';
 require_once __DIR__ . '/../routes/catalogo_routes.php';
+require_once __DIR__ . '/../routes/notificacao_routes.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -46,13 +47,12 @@ $rotasPrincipais = [
     'categorias',
     'marcas',
     'unidades',
+    'notificacoes',
 ];
 
 $rotaPrincipal = null;
 $posicaoRota = null;
 
-// Usa o primeiro segmento da URI que for uma rota principal, para que
-// subrotas como "favoritos/mercados" não sejam confundidas com "mercados".
 foreach ($partesUri as $posicao => $parte) {
     if (in_array($parte, $rotasPrincipais, true)) {
         $rotaPrincipal = $parte;
@@ -99,6 +99,9 @@ switch ($rotaPrincipal) {
     case 'marcas':
     case 'unidades':
         tratarRotaCatalogo($metodo, $rotaPrincipal);
+        break;
+    case 'notificacoes':
+        tratarRotaNotificacao($metodo, $rotaTratada);
         break;
     default:
         Response::json(false, 'Rota não encontrada.', null, 404);

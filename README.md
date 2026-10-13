@@ -23,6 +23,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Mercado aberto ou fechado** nos cards da tela principal, de acordo com o horário de funcionamento
 - **Tempo restante da promoção** — contagem regressiva ("Termina em 2h 35min") quando o mercado define um prazo
 - **Favoritos** — mercados e produtos favoritos, com indicação de melhor preço entre os mercados, distância e última atualização do preço
+- **Notificações push** quando um **mercado favorito** lança uma promoção ou um **produto favorito** entra em promoção (quem favoritou os dois recebe um aviso só), com histórico no sino da tela principal e contador de não lidas; o histórico guarda 30 dias e pode ser limpo arrastando um aviso para o lado ou em "Limpar tudo"
 - **Detalhes do mercado** — endereço, tele-entrega e taxa de entrega, horário de funcionamento (com "aberto agora"), nota média e produtos disponíveis
 - **Avaliação de mercados** — nota de 1 a 5 estrelas (uma por usuário, podendo ser alterada)
 - **Perfil** — edição de nome e e-mail e exclusão da conta
@@ -34,6 +35,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Cadastro do estabelecimento** com **endereço preenchido pelo CEP** (rua, bairro, cidade e UF via ViaCEP; o lojista completa o número)
 - **Localização do mercado no mapa** — as coordenadas são obtidas pelo endereço ao salvar, ou pelo GPS com o botão "Usar minha localização atual", que também preenche o endereço (CEP, rua, número, bairro, cidade e UF) a partir da posição — útil quando o lojista está na loja
 - **Painel do lojista** — visão geral com produtos cadastrados, em promoção, disponíveis, com estoque baixo e indisponíveis, nota média, quantidade de favoritos e avisos de informações faltando (horário e foto)
+- **Notificações push** quando um produto fica com **estoque baixo** (5 unidades ou menos) ou é marcado como **indisponível**, com histórico no sino do painel (mesmas opções de limpeza)
 - **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria
 - **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes
 - **Edição de produto** — preço, estoque, disponibilidade, promoção com percentual de desconto e prazo de término, e foto do produto
@@ -84,7 +86,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 | Mapa | [flutter_map](https://pub.dev/packages/flutter_map) + mapas do [OpenStreetMap](https://www.openstreetmap.org) (sem chave) |
 | Endereço pelo CEP | [ViaCEP](https://viacep.com.br) (gratuita, sem chave) |
 | Fotos (câmera/galeria) | [image_picker](https://pub.dev/packages/image_picker) |
-| Notificações *(previsto)* | Firebase Cloud Messaging |
+| Notificações | [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) por tópicos (`mercado_{id}`, `item_{id}`, `lojista_{id}`), enviado pela API PHP (API HTTP v1) |
 
 ---
 
@@ -92,6 +94,6 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 
 🚧 **Em desenvolvimento** — Projeto de TCC (Trabalho de Conclusão de Curso)
 
-Atualmente está prevista a implementação de:
+As funcionalidades previstas para o TCC estão implementadas; as melhorias seguintes estão em **Adições Futuras**.
 
-- 🔔 **Notificações com Firebase** — aviso ao usuário quando um produto favoritado entrar em promoção (a relação de produtos favoritos já está pronta no banco)
+> 🔐 A chave da conta de serviço do Firebase (`backend_php/config/firebase-chave.json`) **não é versionada**: ela deve ser enviada manualmente ao servidor. O `.htaccess` da API bloqueia o acesso público a arquivos `.json` e ocultos (como o `.env`).

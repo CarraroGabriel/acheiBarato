@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/services/notificacao_service.dart';
 import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/horario_funcionamento.dart';
 import 'package:achei_barato/widgets/imagem_app.dart';
@@ -91,6 +92,7 @@ class _PerfilMercadoState extends State<PerfilMercado> {
           'id_mercado': widget.idMercado,
         });
       }
+      NotificacaoService.seguirMercado(widget.idMercado, !_favorito);
       if (mounted) setState(() => _favorito = !_favorito);
     } on ApiException catch (e) {
       _mostrarMensagem(e.mensagem);

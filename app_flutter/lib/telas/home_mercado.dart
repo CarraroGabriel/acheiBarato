@@ -8,6 +8,7 @@ import 'package:achei_barato/widgets/app_bar.dart';
 import 'package:achei_barato/widgets/imagem_app.dart';
 import 'package:achei_barato/widgets/bottomnav_mercado.dart';
 import 'package:achei_barato/widgets/menu_lateral.dart';
+import 'package:achei_barato/widgets/sino_notificacoes.dart';
 import 'package:achei_barato/widgets/tempo_promocao.dart';
 
 class HomeMercado extends StatefulWidget {
@@ -99,13 +100,7 @@ class _HomeMercadoState extends State<HomeMercado> {
       appBar: AcheiBaratoAppBar(
         exibirBotaoVoltar: false,
         exibirMenu: true,
-        acoes: [
-          IconButton(
-            tooltip: 'Notificações',
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
+        acoes: const [SinoNotificacoes()],
       ),
       drawer: MenuLateral(
         nome: _nomeMercado,
