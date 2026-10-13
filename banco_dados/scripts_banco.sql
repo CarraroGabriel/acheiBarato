@@ -112,7 +112,7 @@ CREATE TABLE Tb_Mercado (
                 nu_cnpj CHAR(14) NOT NULL,
                 nm_mercado VARCHAR(30) NOT NULL,
                 ds_email VARCHAR(50) NOT NULL,
-                nu_cep INTEGER NOT NULL,
+                nu_cep CHAR(8) NOT NULL,
                 nm_endereco VARCHAR(50) NOT NULL,
                 nu_numero VARCHAR(10) NOT NULL DEFAULT 'S/N', -- texto para aceitar 123A, S/N, KM 5
                 nm_bairro VARCHAR(40) NOT NULL DEFAULT '', -- bairro, cidade e UF vêm do CEP (ViaCEP)
@@ -126,7 +126,8 @@ CREATE TABLE Tb_Mercado (
                 nu_longitude NUMERIC NOT NULL,
                 nu_avg_nota NUMERIC(3,2) NOT NULL,
                 nul_avaliacoes INTEGER NOT NULL,
-                CONSTRAINT pk_mercado PRIMARY KEY (id_mercado)
+                CONSTRAINT pk_mercado PRIMARY KEY (id_mercado),
+                CONSTRAINT ck_mercado_cep CHECK (nu_cep ~ '^[0-9]{8}$')
 );
 
 CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado START 1;

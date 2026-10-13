@@ -201,7 +201,7 @@ class Mercado
         $stmt->bindValue(':nu_cnpj', $dados['nu_cnpj']);
         $stmt->bindValue(':nm_mercado', $dados['nm_mercado']);
         $stmt->bindValue(':ds_email', $dados['ds_email']);
-        $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
+        $stmt->bindValue(':nu_cep', $dados['nu_cep']);
         $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
         $stmt->bindValue(':nu_numero', $dados['nu_numero']);
         $stmt->bindValue(':nm_bairro', $dados['nm_bairro']);
@@ -254,7 +254,7 @@ class Mercado
         $stmt->bindValue(':nu_cnpj', $dados['nu_cnpj']);
         $stmt->bindValue(':nm_mercado', $dados['nm_mercado']);
         $stmt->bindValue(':ds_email', $dados['ds_email']);
-        $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
+        $stmt->bindValue(':nu_cep', $dados['nu_cep']);
         $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
         $stmt->bindValue(':nu_numero', $dados['nu_numero']);
         $stmt->bindValue(':nm_bairro', $dados['nm_bairro']);
@@ -302,7 +302,7 @@ class Mercado
             $stmt = $this->conexao->prepare($sql);
             $stmt->bindValue(':nm_mercado', $dados['nm_mercado']);
             $stmt->bindValue(':ds_email', $dados['ds_email']);
-            $stmt->bindValue(':nu_cep', $dados['nu_cep'], PDO::PARAM_INT);
+            $stmt->bindValue(':nu_cep', $dados['nu_cep']);
             $stmt->bindValue(':nm_endereco', $dados['nm_endereco']);
             $stmt->bindValue(':nu_numero', $dados['nu_numero']);
             $stmt->bindValue(':nm_bairro', $dados['nm_bairro']);

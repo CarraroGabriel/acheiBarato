@@ -148,7 +148,6 @@ class MercadoController
             if (strlen($perfil['nu_cep']) !== 8) {
                 throw new InvalidArgumentException('O CEP deve possuir 8 dígitos.');
             }
-            $perfil['nu_cep'] = (int) $perfil['nu_cep'];
 
             if (!preg_match('/^.{1,50}$/u', $perfil['nm_endereco'])) {
                 throw new InvalidArgumentException('Informe um endereço com até 50 caracteres.');
@@ -390,10 +389,14 @@ class MercadoController
         }
 
         $dados['nu_cnpj'] = preg_replace('/\D/', '', (string) $dados['nu_cnpj']);
-        $dados['nu_cep'] = (int) preg_replace('/\D/', '', (string) $dados['nu_cep']);
+        $dados['nu_cep'] = preg_replace('/\D/', '', (string) $dados['nu_cep']);
 
         if (strlen($dados['nu_cnpj']) !== 14) {
             throw new InvalidArgumentException('O CNPJ deve possuir 14 dígitos.');
+        }
+
+        if (strlen($dados['nu_cep']) !== 8) {
+            throw new InvalidArgumentException('O CEP deve possuir 8 dígitos.');
         }
 
         if (!filter_var($dados['ds_email'], FILTER_VALIDATE_EMAIL)) {
