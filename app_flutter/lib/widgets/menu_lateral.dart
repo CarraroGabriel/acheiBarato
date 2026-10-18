@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:achei_barato/telas/editar_mercado.dart';
 import 'package:achei_barato/telas/editar_usuario.dart';
+import 'package:achei_barato/services/api_service.dart';
 import 'package:achei_barato/services/notificacao_service.dart';
 import 'package:achei_barato/telas/login.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
 
 class MenuLateral extends StatelessWidget {
   final String nome;
@@ -45,15 +47,7 @@ class MenuLateral extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    isUsuario ? Icons.person : Icons.store,
-                    color: Colors.red,
-                    size: 30,
-                  ),
-                ),
+                _AvatarMenu(isUsuario: isUsuario, id: id),
                 const SizedBox(height: 8),
                 Text(
                   'Olá, $nome!',
@@ -94,6 +88,49 @@ class MenuLateral extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AvatarMenu extends StatefulWidget {
+  final bool isUsuario;
+  final int id;
+
+  const _AvatarMenu({required this.isUsuario, required this.id});
+
+  @override
+  State<_AvatarMenu> createState() => _AvatarMenuState();
+}
+
+class _AvatarMenuState extends State<_AvatarMenu> {
+  String? _foto;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.isUsuario) _carregarFoto();
+  }
+
+  Future<void> _carregarFoto() async {
+    try {
+      final resposta = await ApiService.get('mercados/${widget.id}');
+      if (!mounted) return;
+      setState(() => _foto = resposta['dados']?['ds_foto_mercado']?.toString());
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final icone = widget.isUsuario ? Icons.person : Icons.store;
+
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: Colors.white,
+      child: ClipOval(
+        child: (_foto ?? '').isEmpty
+            ? Icon(icone, color: Colors.red, size: 30)
+            : ImagemApp(caminhos: [_foto], iconePadrao: icone),
       ),
     );
   }

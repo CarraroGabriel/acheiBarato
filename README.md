@@ -39,10 +39,10 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria
 - **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes; o registro é recusado com "Valor ou quantidade inválidos." quando o valor não é maior que zero ou o estoque é negativo ou não numérico
 - **Edição de produto** — preço, estoque, disponibilidade, promoção com percentual de desconto e prazo de término, e foto do produto
-- **Perfil do mercado** — foto do estabelecimento, nome, e-mail, endereço completo (CEP, rua, número, bairro, cidade e UF), tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
+- **Perfil do mercado** — foto do estabelecimento, nome, e-mail, endereço completo (CEP, rua, número, bairro, cidade e UF), tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta; a foto também aparece no menu lateral do lojista
 
 ### Imagens
-- **Fotos pela câmera ou galeria** do celular, reduzidas no app antes do envio e salvas no servidor (`public/uploads`); o banco guarda apenas o caminho do arquivo, com nome padronizado `{id}-{nome}.jpg` (ex.: `17-arroz-branco-5-kg-tio-joao.jpg`)
+- **Fotos pela câmera ou galeria** do celular, reduzidas no app antes do envio e salvas no servidor (`public/uploads`); o banco guarda apenas o caminho do arquivo, com nome padronizado `{id}-{nome}.jpg` (ex.: `17-arroz-branco-5-kg-tio-joao.jpg`); no servidor, as pastas `public/uploads/mercados` e `public/uploads/produtos` precisam de permissão de escrita (777)
 - **Imagem padrão dos produtos** incluída no app (`assets/produtos`, 512×512 px) e ligada pelo banco, usada quando o mercado não envia foto — ilustrações geradas com IA (Google Gemini)
 - Ordem de exibição de um produto: foto enviada → imagem padrão → ícone
 
