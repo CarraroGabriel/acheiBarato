@@ -188,7 +188,7 @@ class _RegistroProdutoState extends State<RegistroProduto> {
       return;
     }
 
-    if (valor == null || quantidade == null) {
+    if (valor == null || quantidade == null || valor <= 0 || quantidade < 0) {
       _mostrarMensagem('Valor ou quantidade inválidos.');
       return;
     }

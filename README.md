@@ -37,7 +37,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Painel do lojista** — visão geral com produtos cadastrados, em promoção, disponíveis, com estoque baixo e indisponíveis, nota média, quantidade de favoritos e avisos de informações faltando (horário e foto)
 - **Notificações push** quando um produto fica com **estoque baixo** (5 unidades ou menos) ou é marcado como **indisponível**, com histórico no sino do painel (mesmas opções de limpeza)
 - **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria
-- **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes
+- **Cadastro de produtos** a partir do catálogo (categoria → produto → tipo → marca → embalagem), permitindo cadastrar produtos, tipos e marcas novos sem duplicar os existentes; o registro é recusado com "Valor ou quantidade inválidos." quando o valor não é maior que zero ou o estoque é negativo ou não numérico
 - **Edição de produto** — preço, estoque, disponibilidade, promoção com percentual de desconto e prazo de término, e foto do produto
 - **Perfil do mercado** — foto do estabelecimento, nome, e-mail, endereço completo (CEP, rua, número, bairro, cidade e UF), tele-entrega com taxa de entrega, horário de funcionamento por dia da semana e exclusão da conta
 

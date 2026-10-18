@@ -229,8 +229,8 @@ class ProdutoMercadoController
             throw new InvalidArgumentException('Conteúdo da embalagem inválido.');
         }
 
-        if ($dados['nu_valor'] < 0 || $dados['nu_qtde'] < 0) {
-            throw new InvalidArgumentException('Valor e quantidade não podem ser negativos.');
+        if ($dados['nu_valor'] <= 0 || $dados['nu_qtde'] < 0) {
+            throw new InvalidArgumentException('Valor ou quantidade inválidos.');
         }
 
         return $dados;
