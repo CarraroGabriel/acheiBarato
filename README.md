@@ -20,7 +20,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Comparação de preços** — tela do produto com todos os mercados que o vendem, do menor para o maior preço, destacando o **melhor preço**, a promoção, a **distância**, a **última atualização do preço** ("hoje, 14h") e a tele-entrega de cada um
 - **Busca de mercados** com a distância de cada um e filtros por distância (raio), tele-entrega, avaliação mínima e mercados com promoções
 - **Promoções em destaque** na tela principal, com as dos mercados favoritos primeiro
-- **Mercado aberto ou fechado** nos cards da tela principal, de acordo com o horário de funcionamento
+- **Mercado aberto ou fechado** nos cards da tela principal, de acordo com o horário de funcionamento (sempre no horário de Brasília, independente do fuso do celular)
 - **Tempo restante da promoção** — contagem regressiva ("Termina em 2h 35min") quando o mercado define um prazo
 - **Favoritos** — mercados e produtos favoritos, com indicação de melhor preço entre os mercados, distância e última atualização do preço
 - **Notificações push** quando um **mercado favorito** lança uma promoção ou um **produto favorito** entra em promoção (quem favoritou os dois recebe um aviso só), com histórico no sino da tela principal e contador de não lidas; o histórico guarda 30 dias e pode ser limpo arrastando um aviso para o lado ou em "Limpar tudo"

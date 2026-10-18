@@ -78,7 +78,9 @@ class EditorHorarios extends StatelessWidget {
   ]) {
     if (horarios.isEmpty) return null;
 
-    final agora = momento ?? DateTime.now();
+    // Horário de Brasília (UTC-3, sem horário de verão), igual ao backend.
+    final agora =
+        momento ?? DateTime.now().toUtc().subtract(const Duration(hours: 3));
     final hoje = agora.weekday % 7; // DateTime: 7 = domingo; banco: 0 = domingo
     final minutoAtual = agora.hour * 60 + agora.minute;
 
