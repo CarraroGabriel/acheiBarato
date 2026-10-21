@@ -180,8 +180,13 @@ class _EdicaoProdutoState extends State<EdicaoProduto> {
     );
     final quantidade = int.tryParse(_qtdeController.text);
 
-    if (valorDigitado == null || quantidade == null) {
-      _mostrarMensagem('Informe um valor e uma quantidade válidos.');
+    if (valorDigitado == null ||
+        quantidade == null ||
+        valorDigitado <= 0 ||
+        quantidade < 0) {
+      _mostrarMensagem(
+        'Informe um valor maior que zero e uma quantidade válida.',
+      );
       return;
     }
 

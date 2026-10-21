@@ -78,12 +78,12 @@ class ProdutoMercadoController
                 ? (int) ($dados['nu_desconto'] ?? 0)
                 : 0;
 
-            if ($dados['nu_valor'] < 0 || $dados['nu_qtde'] < 0) {
-                throw new InvalidArgumentException('Valor e quantidade não podem ser negativos.');
+            if ($dados['nu_valor'] <= 0 || $dados['nu_qtde'] < 0) {
+                throw new InvalidArgumentException('Valor ou quantidade inválidos.');
             }
 
-            if ($dados['nu_desconto'] < 0 || $dados['nu_desconto'] > 100) {
-                throw new InvalidArgumentException('Desconto inválido.');
+            if ($dados['nu_desconto'] < 0 || $dados['nu_desconto'] > 50) {
+                throw new InvalidArgumentException('O desconto deve ser de no máximo 50%.');
             }
 
             if ($dados['fl_promocao'] && $dados['nu_desconto'] === 0) {

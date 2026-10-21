@@ -48,7 +48,13 @@ class _CadastroMercadoState extends State<CadastroMercado> {
     setState(() => _carregando = true);
 
     try {
-      await _endereco.resolverCoordenadas();
+      final localizado = await _endereco.resolverCoordenadas();
+      if (!localizado && !_endereco.temCoordenadas) {
+        if (!mounted) return;
+        setState(() => _carregando = false);
+        if (!await _confirmarSemLocalizacao()) return;
+        setState(() => _carregando = true);
+      }
 
       await ApiService.post('mercados', {
         'nu_cnpj': _cnpjController.text,
@@ -79,6 +85,32 @@ class _CadastroMercadoState extends State<CadastroMercado> {
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
+  }
+
+  Future<bool> _confirmarSemLocalizacao() async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Endereço não encontrado no mapa'),
+        content: const Text(
+          'Sem a localização, os clientes não verão a distância até o mercado '
+          'nem o encontrarão no mapa. Confira o endereço ou use o botão '
+          '"Usar minha localização atual". Você também pode cadastrar assim '
+          'e ajustar depois no perfil do mercado.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Ajustar endereço'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cadastrar assim'),
+          ),
+        ],
+      ),
+    );
+    return confirmou == true;
   }
 
   void _mostrarMensagem(String mensagem) {
