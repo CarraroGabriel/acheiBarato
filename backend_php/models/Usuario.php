@@ -15,7 +15,7 @@ class Usuario
 
     public function listar(): array
     {
-        $sql = 'SELECT id_usuario, nu_cpf, nm_usuario, ds_email, dt_nascimento
+        $sql = 'SELECT id_usuario, nu_cpf, nm_usuario, ds_email
                 FROM tb_usuario
                 ORDER BY nm_usuario';
 
@@ -26,7 +26,7 @@ class Usuario
 
     public function consultarPorId(int $idUsuario): ?array
     {
-        $sql = 'SELECT id_usuario, nu_cpf, nm_usuario, ds_email, dt_nascimento
+        $sql = 'SELECT id_usuario, nu_cpf, nm_usuario, ds_email
                 FROM tb_usuario
                 WHERE id_usuario = :id_usuario';
 
@@ -41,10 +41,10 @@ class Usuario
     public function inserir(array $dados): array
     {
         $sql = 'INSERT INTO tb_usuario
-                    (nu_cpf, nm_usuario, ds_email, dt_nascimento, ds_senha)
+                    (nu_cpf, nm_usuario, ds_email, ds_senha)
                 VALUES
-                    (:nu_cpf, :nm_usuario, :ds_email, :dt_nascimento, :ds_senha)
-                RETURNING id_usuario, nu_cpf, nm_usuario, ds_email, dt_nascimento';
+                    (:nu_cpf, :nm_usuario, :ds_email, :ds_senha)
+                RETURNING id_usuario, nu_cpf, nm_usuario, ds_email';
 
         $senhaHash = password_hash($dados['ds_senha'], PASSWORD_DEFAULT);
 
@@ -52,7 +52,6 @@ class Usuario
         $stmt->bindValue(':nu_cpf', $dados['nu_cpf']);
         $stmt->bindValue(':nm_usuario', $dados['nm_usuario']);
         $stmt->bindValue(':ds_email', $dados['ds_email']);
-        $stmt->bindValue(':dt_nascimento', $dados['dt_nascimento']);
         $stmt->bindValue(':ds_senha', $senhaHash);
         $stmt->execute();
 
@@ -65,7 +64,6 @@ class Usuario
             'nu_cpf = :nu_cpf',
             'nm_usuario = :nm_usuario',
             'ds_email = :ds_email',
-            'dt_nascimento = :dt_nascimento',
         ];
 
         if (!empty($dados['ds_senha'])) {
@@ -75,13 +73,12 @@ class Usuario
         $sql = 'UPDATE tb_usuario
                 SET ' . implode(', ', $campos) . '
                 WHERE id_usuario = :id_usuario
-                RETURNING id_usuario, nu_cpf, nm_usuario, ds_email, dt_nascimento';
+                RETURNING id_usuario, nu_cpf, nm_usuario, ds_email';
 
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(':nu_cpf', $dados['nu_cpf']);
         $stmt->bindValue(':nm_usuario', $dados['nm_usuario']);
         $stmt->bindValue(':ds_email', $dados['ds_email']);
-        $stmt->bindValue(':dt_nascimento', $dados['dt_nascimento']);
         $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
 
         if (!empty($dados['ds_senha'])) {

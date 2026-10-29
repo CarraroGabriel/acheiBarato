@@ -133,7 +133,7 @@ class UsuarioController
 
     private function validar(array $dados, bool $senhaObrigatoria): array
     {
-        $obrigatorios = ['nu_cpf', 'nm_usuario', 'ds_email', 'dt_nascimento'];
+        $obrigatorios = ['nu_cpf', 'nm_usuario', 'ds_email'];
 
         foreach ($obrigatorios as $campo) {
             if (!isset($dados[$campo]) || trim((string) $dados[$campo]) === '') {
@@ -153,10 +153,6 @@ class UsuarioController
 
         if (!filter_var($dados['ds_email'], FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException('Informe um e-mail válido.');
-        }
-
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $dados['dt_nascimento'])) {
-            throw new InvalidArgumentException('A data de nascimento deve estar no formato AAAA-MM-DD.');
         }
 
         return $dados;

@@ -15,7 +15,6 @@ class _CadastroUsuarioState extends State<CadastroUsuario> {
   final _nomeController = TextEditingController();
   final _cpfController = TextEditingController();
   final _emailController = TextEditingController();
-  final _nascimentoController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
@@ -26,26 +25,9 @@ class _CadastroUsuarioState extends State<CadastroUsuario> {
     _nomeController.dispose();
     _cpfController.dispose();
     _emailController.dispose();
-    _nascimentoController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
     super.dispose();
-  }
-
-  Future<void> _selecionarData() async {
-    final data = await showDatePicker(
-      context: context,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      initialDate: DateTime(2000),
-    );
-
-    if (data == null) return;
-
-    final ano = data.year.toString().padLeft(4, '0');
-    final mes = data.month.toString().padLeft(2, '0');
-    final dia = data.day.toString().padLeft(2, '0');
-    _nascimentoController.text = '$ano-$mes-$dia';
   }
 
   Future<void> _cadastrar() async {
@@ -61,7 +43,6 @@ class _CadastroUsuarioState extends State<CadastroUsuario> {
         'nu_cpf': _cpfController.text,
         'nm_usuario': _nomeController.text.trim(),
         'ds_email': _emailController.text.trim(),
-        'dt_nascimento': _nascimentoController.text,
         'ds_senha': _senhaController.text,
       });
 
@@ -128,18 +109,6 @@ class _CadastroUsuarioState extends State<CadastroUsuario> {
             labelText: 'Email',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.email),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _nascimentoController,
-          readOnly: true,
-          onTap: _selecionarData,
-          decoration: const InputDecoration(
-            labelText: 'Data de Nascimento',
-            hintText: 'AAAA-MM-DD',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.calendar_today),
           ),
         ),
         const SizedBox(height: 16),

@@ -174,7 +174,6 @@ CREATE TABLE Tb_Usuario (
                 nu_cpf CHAR(11) NOT NULL,
                 nm_usuario VARCHAR(50) NOT NULL,
                 ds_email VARCHAR(50) NOT NULL,
-                dt_nascimento DATE NOT NULL,
                 ds_senha VARCHAR(255) NOT NULL, -- valor alto para caber o hash de senha
                 CONSTRAINT pk_usuario PRIMARY KEY (id_usuario)
 );

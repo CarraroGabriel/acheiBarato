@@ -14,7 +14,7 @@ class Auth
 
     public function loginUsuario(string $email, string $senha): ?array
     {
-        $sql = 'SELECT id_usuario, nu_cpf, nm_usuario, ds_email, dt_nascimento, ds_senha
+        $sql = 'SELECT id_usuario, nu_cpf, nm_usuario, ds_email, ds_senha
                 FROM tb_usuario
                 WHERE LOWER(ds_email) = LOWER(:email)
                 LIMIT 1';
