@@ -71,8 +71,9 @@ class EnderecoMercado {
     'nm_bairro': bairro.text.trim(),
     'nm_cidade': cidade.text.trim(),
     'sg_uf': uf.text.trim().toUpperCase(),
-    'nu_latitude': latitude,
-    'nu_longitude': longitude,
+    // Sem localização, a API grava as coordenadas como nulas.
+    'nu_latitude': temCoordenadas ? latitude : null,
+    'nu_longitude': temCoordenadas ? longitude : null,
   };
 
   void dispose() {

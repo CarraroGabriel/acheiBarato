@@ -351,8 +351,8 @@ class MercadoController
             'nm_bairro' => trim((string) ($dados['nm_bairro'] ?? '')),
             'nm_cidade' => trim((string) ($dados['nm_cidade'] ?? '')),
             'sg_uf' => strtoupper(trim((string) ($dados['sg_uf'] ?? ''))),
-            'nu_latitude' => (float) ($dados['nu_latitude'] ?? 0),
-            'nu_longitude' => (float) ($dados['nu_longitude'] ?? 0),
+            'nu_latitude' => $this->lerCoordenada($dados['nu_latitude'] ?? null),
+            'nu_longitude' => $this->lerCoordenada($dados['nu_longitude'] ?? null),
         ];
 
         if (!preg_match('/^.{0,40}$/u', $complemento['nm_bairro'])) {
@@ -367,11 +367,30 @@ class MercadoController
             throw new InvalidArgumentException('Informe a UF com 2 letras.');
         }
 
-        if (abs($complemento['nu_latitude']) > 90 || abs($complemento['nu_longitude']) > 180) {
+        // Sem localização, as duas coordenadas ficam nulas; nunca só uma delas.
+        if (($complemento['nu_latitude'] === null) !== ($complemento['nu_longitude'] === null)) {
+            throw new InvalidArgumentException('Coordenadas do mercado inválidas.');
+        }
+
+        if ($complemento['nu_latitude'] !== null
+            && (abs($complemento['nu_latitude']) > 90 || abs($complemento['nu_longitude']) > 180)) {
             throw new InvalidArgumentException('Coordenadas do mercado inválidas.');
         }
 
         return $complemento;
+    }
+
+    private function lerCoordenada(mixed $valor): ?float
+    {
+        if ($valor === null || trim((string) $valor) === '') {
+            return null;
+        }
+
+        if (!is_numeric($valor)) {
+            throw new InvalidArgumentException('Coordenadas do mercado inválidas.');
+        }
+
+        return (float) $valor;
     }
 
     private function normalizarEValidar(array $dados, bool $senhaObrigatoria): array
