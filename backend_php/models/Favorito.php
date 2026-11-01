@@ -59,8 +59,8 @@ class Favorito
                 'nu_taxa_entrega' => (float) $m['nu_taxa_entrega'],
                 'nu_avg_nota'     => (float) $m['nu_avg_nota'],
                 'nul_avaliacoes'  => (int) $m['nul_avaliacoes'],
-                'nu_latitude'     => (float) $m['nu_latitude'],
-                'nu_longitude'    => (float) $m['nu_longitude'],
+                'nu_latitude'     => $m['nu_latitude'] === null ? null : (float) $m['nu_latitude'],
+                'nu_longitude'    => $m['nu_longitude'] === null ? null : (float) $m['nu_longitude'],
                 'qt_promocoes'    => (int) $m['qt_promocoes'],
                 'horario_hoje'    => $situacao['horario_hoje'],
                 'aberto_agora'    => $situacao['aberto_agora'],
@@ -129,8 +129,8 @@ class Favorito
                 'fl_disponivel'      => $this->paraBool($linha['fl_disponivel']),
                 'fl_motoboy'         => $this->paraBool($linha['fl_motoboy']),
                 'dt_atualizacao'     => $linha['dt_atualizacao'],
-                'nu_latitude'        => (float) $linha['nu_latitude'],
-                'nu_longitude'       => (float) $linha['nu_longitude'],
+                'nu_latitude'        => $linha['nu_latitude'] === null ? null : (float) $linha['nu_latitude'],
+                'nu_longitude'       => $linha['nu_longitude'] === null ? null : (float) $linha['nu_longitude'],
                 'melhor_preco'       => false,
             ];
         }

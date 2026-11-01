@@ -122,12 +122,15 @@ CREATE TABLE Tb_Mercado (
                 fl_motoboy BOOLEAN NOT NULL,
                 nu_taxa_entrega NUMERIC(5,2) NOT NULL DEFAULT 0, -- taxa da tele-entrega; 0 = grátis
                 ds_foto_mercado VARCHAR(255) NOT NULL,
-                nu_latitude NUMERIC NOT NULL,
-                nu_longitude NUMERIC NOT NULL,
+                nu_latitude NUMERIC, -- nulo = endereço não localizado no mapa
+                nu_longitude NUMERIC,
                 nu_avg_nota NUMERIC(3,2) NOT NULL,
                 nul_avaliacoes INTEGER NOT NULL,
                 CONSTRAINT pk_mercado PRIMARY KEY (id_mercado),
-                CONSTRAINT ck_mercado_cep CHECK (nu_cep ~ '^[0-9]{8}$')
+                CONSTRAINT ck_mercado_cep CHECK (nu_cep ~ '^[0-9]{8}$'),
+                CONSTRAINT ck_mercado_coordenadas CHECK ((nu_latitude IS NULL) = (nu_longitude IS NULL)),
+                CONSTRAINT ck_mercado_latitude CHECK (nu_latitude BETWEEN -90 AND 90),
+                CONSTRAINT ck_mercado_longitude CHECK (nu_longitude BETWEEN -180 AND 180)
 );
 
 CREATE SEQUENCE IF NOT EXISTS sq_tb_mercado START 1;
