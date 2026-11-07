@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../controllers/UsuarioController.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 
 function tratarRotasUsuario(string $metodo, array $partesUri): void
 {
@@ -11,6 +12,14 @@ function tratarRotasUsuario(string $metodo, array $partesUri): void
 
     if (isset($partesUri[1]) && ctype_digit((string) $partesUri[1])) {
         $id_usuario = (int) $partesUri[1];
+    }
+
+    // O cadastro é público; consultar, alterar e excluir só a própria conta.
+    if ($metodo !== 'POST') {
+        if ($id_usuario === null) {
+            Response::json(false, 'Acesso negado.', null, 403);
+        }
+        Autenticacao::exigirUsuario($id_usuario);
     }
 
     switch ($metodo) {

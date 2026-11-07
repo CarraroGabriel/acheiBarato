@@ -80,6 +80,7 @@ class MenuLateral extends StatelessWidget {
             title: const Text('Sair', style: TextStyle(color: Colors.red)),
             onTap: () {
               NotificacaoService.sair();
+              ApiService.encerrarSessao();
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => Login(isUsuario: isUsuario)),

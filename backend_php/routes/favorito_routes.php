@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../controllers/FavoritoController.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 
 function tratarRotaFavorito(string $metodo, array $rota): void
 {
@@ -14,6 +15,7 @@ function tratarRotaFavorito(string $metodo, array $rota): void
     }
 
     $idUsuario = (int) $_GET['id_usuario'];
+    Autenticacao::exigirUsuario($idUsuario);
     $controller = new FavoritoController();
 
     switch ($rota[1] ?? null) {

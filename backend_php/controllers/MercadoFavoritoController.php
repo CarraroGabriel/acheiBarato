@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../models/MercadoFavorito.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 
 class MercadoFavoritoController
 {
@@ -54,6 +55,7 @@ class MercadoFavoritoController
         if ($u <= 0 || $m <= 0) {
             Response::json(false, 'Informe id_usuario e id_mercado.', null, 400);
         }
+        Autenticacao::exigirUsuario($u);
         return [$u, $m];
     }
 }

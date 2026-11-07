@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../controllers/NotificacaoController.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 
 function tratarRotaNotificacao(string $metodo, array $rota): void
 {
@@ -13,6 +14,13 @@ function tratarRotaNotificacao(string $metodo, array $rota): void
         $id = (int) $_GET['id_mercado'];
     } else {
         Response::json(false, 'Informe o id_usuario ou o id_mercado na consulta.', null, 400);
+    }
+
+    // Cada conta só lê e apaga as próprias notificações.
+    if ($campo === 'id_usuario') {
+        Autenticacao::exigirUsuario($id);
+    } else {
+        Autenticacao::exigirMercado($id);
     }
 
     $controller = new NotificacaoController();

@@ -57,6 +57,7 @@ class _LoginState extends State<Login> {
       if (!mounted) return;
 
       final dados = Map<String, dynamic>.from(resposta['dados'] as Map);
+      ApiService.iniciarSessao(dados['token']?.toString());
 
       if (_isUsuario) {
         final idUsuario = _toInt(dados['id_usuario']);

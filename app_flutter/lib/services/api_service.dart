@@ -17,6 +17,14 @@ class ApiException implements Exception {
 class ApiService {
   static const Duration _timeout = Duration(seconds: 15);
 
+  // Token devolvido pela API no login. Vai em todas as requisições para que
+  // a API saiba qual conta está pedindo e libere só os dados dela.
+  static String? _token;
+
+  static void iniciarSessao(String? token) => _token = token;
+
+  static void encerrarSessao() => _token = null;
+
   static Future<Map<String, dynamic>> get(String rota) async {
     final response = await http
         .get(_uri(rota), headers: _headers())
@@ -58,6 +66,7 @@ class ApiService {
   }) async {
     final requisicao = http.MultipartRequest('POST', _uri(rota))
       ..headers['Accept'] = 'application/json'
+      ..headers.addAll(_autorizacao())
       ..files.add(
         http.MultipartFile.fromBytes('foto', bytes, filename: nomeArquivo),
       );
@@ -73,10 +82,14 @@ class ApiService {
     return Uri.parse('${ApiConfig.baseUrl}/$rotaLimpa');
   }
 
-  static Map<String, String> _headers() => const {
+  static Map<String, String> _headers() => {
     'Content-Type': 'application/json; charset=UTF-8',
     'Accept': 'application/json',
+    ..._autorizacao(),
   };
+
+  static Map<String, String> _autorizacao() =>
+      _token == null ? const {} : {'Authorization': 'Bearer $_token'};
 
   static Map<String, dynamic> _tratarResposta(http.Response response) {
     Map<String, dynamic> json;

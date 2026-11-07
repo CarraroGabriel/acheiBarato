@@ -189,6 +189,7 @@ class _EditarMercadoState extends State<EditarMercado> {
       if (!mounted) return;
 
       NotificacaoService.sair();
+      ApiService.encerrarSessao();
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Conta excluída.')));
       Navigator.pushAndRemoveUntil(

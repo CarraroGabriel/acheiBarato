@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../controllers/MercadoController.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 
 function tratarRotasMercado(string $metodo, array $rota): void
 {
@@ -15,11 +16,13 @@ function tratarRotasMercado(string $metodo, array $rota): void
     }
 
     if ($metodo === 'POST' && $idMercado !== null && $subrota === 'foto') {
+        Autenticacao::exigirMercado($idMercado);
         $controller->enviarFoto($idMercado);
         return;
     }
 
     if ($metodo === 'GET' && $idMercado !== null && $subrota === 'resumo') {
+        Autenticacao::exigirMercado($idMercado);
         $controller->resumo($idMercado);
         return;
     }
@@ -44,6 +47,7 @@ function tratarRotasMercado(string $metodo, array $rota): void
             if ($idMercado === null) {
                 Response::json(false, 'Informe o id_mercado na URL.', null, 400);
             }
+            Autenticacao::exigirMercado($idMercado);
 
             if ($subrota === 'perfil') {
                 $controller->alterarPerfil($idMercado);
@@ -55,6 +59,7 @@ function tratarRotasMercado(string $metodo, array $rota): void
             if ($idMercado === null) {
                 Response::json(false, 'Informe o id_mercado na URL.', null, 400);
             }
+            Autenticacao::exigirMercado($idMercado);
             $controller->excluir($idMercado);
             break;
         default:

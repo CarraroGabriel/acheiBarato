@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../models/Auth.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 
 class AuthController
 {
@@ -40,6 +41,9 @@ class AuthController
             if ($resultado === null) {
                 Response::json(false, 'Credenciais inválidas.', null, 401);
             }
+
+            $idConta = (int) ($tipo === 'usuario' ? $resultado['id_usuario'] : $resultado['id_mercado']);
+            $resultado['token'] = Autenticacao::gerarToken($tipo, $idConta);
 
             Response::json(true, 'Login realizado com sucesso.', $resultado, 200);
         } catch (Throwable $e) {

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Mercado.php';
 require_once __DIR__ . '/../models/ProdutoMercado.php';
 require_once __DIR__ . '/../models/AvaliacaoMercado.php';
 require_once __DIR__ . '/../helpers/Response.php';
+require_once __DIR__ . '/../helpers/Autenticacao.php';
 require_once __DIR__ . '/../helpers/Imagem.php';
 
 class MercadoController
@@ -225,6 +226,8 @@ class MercadoController
             Response::json(false, 'Informe o id_usuario.', null, 400);
         }
 
+        Autenticacao::exigirUsuario($idUsuario);
+
         try {
             $nota = (new AvaliacaoMercado())->consultarNota($idUsuario, $idMercado);
             Response::json(true, 'Avaliação consultada.', ['nu_nota' => $nota], 200);
@@ -242,6 +245,8 @@ class MercadoController
         if ($idUsuario <= 0) {
             Response::json(false, 'Informe o id_usuario.', null, 400);
         }
+
+        Autenticacao::exigirUsuario($idUsuario);
 
         if ($nota === false || $nota < 1 || $nota > 5) {
             Response::json(false, 'A nota deve ser de 1 a 5 estrelas.', null, 400);

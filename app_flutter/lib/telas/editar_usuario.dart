@@ -104,6 +104,7 @@ class _EditarUsuarioState extends State<EditarUsuario> {
       if (!mounted) return;
 
       NotificacaoService.sair();
+      ApiService.encerrarSessao();
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Conta excluída.')));
       Navigator.pushAndRemoveUntil(
