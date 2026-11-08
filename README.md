@@ -50,7 +50,7 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 
 ## 🔮 Adições Futuras (fora do escopo do TCC)
 
-- 🛒 **Carrinho Inteligente / Pedidos** — sugere em qual mercado comprar cada item com base no menor preço. A aba **Pedidos** já aparece na navegação, mas apenas informa que a funcionalidade virá em uma versão futura.
+- 🛒 **Carrinho Inteligente / Pedidos** — sugere em qual mercado comprar cada item com base no menor preço. Ainda não aparece no app.
 - 📊 **Dashboard de vendas para os varejistas** — acompanhamento de vendas e desempenho dos produtos pelo lojista.
 - 🪪 **API de validação de CPF/CNPJ** — verificação dos documentos informados no cadastro de clientes e mercados.
 
