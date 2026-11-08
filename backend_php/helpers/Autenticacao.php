@@ -3,16 +3,7 @@
 require_once __DIR__ . '/../config/Env.php';
 require_once __DIR__ . '/Response.php';
 
-/**
- * Token de acesso da API.
- *
- * No login, a API devolve um token assinado (HMAC-SHA256) com o perfil
- * (usuario ou mercado), o id da conta e a validade. O aplicativo envia o
- * token no cabeçalho "Authorization: Bearer <token>" e cada rota confere se
- * a conta do token é a dona do recurso pedido. O token não é guardado no
- * banco: a assinatura, feita com a chave AUTH_SECRET do arquivo .env, é o
- * que garante que ele foi emitido pela própria API.
- */
+// Token assinado (HMAC-SHA256) emitido no login e conferido nas rotas protegidas.
 class Autenticacao
 {
     private const VALIDADE_SEGUNDOS = 12 * 60 * 60;
@@ -28,7 +19,6 @@ class Autenticacao
         return $payload . '.' . self::assinar($payload);
     }
 
-    /** Devolve ['tipo' => ..., 'id' => ...] da conta do token ou encerra com 401. */
     public static function exigir(): array
     {
         $token = self::tokenDaRequisicao();
@@ -59,13 +49,11 @@ class Autenticacao
         return ['tipo' => $dados['tipo'], 'id' => $dados['id']];
     }
 
-    /** Só o próprio consumidor pode acessar os dados da sua conta. */
     public static function exigirUsuario(int $idUsuario): void
     {
         self::exigirDono('usuario', $idUsuario);
     }
 
-    /** Só o próprio mercado pode alterar os seus dados e as suas ofertas. */
     public static function exigirMercado(int $idMercado): void
     {
         self::exigirDono('mercado', $idMercado);

@@ -4,7 +4,6 @@ class Env
 {
     private static bool $carregado = false;
 
-    // Lê o arquivo .env da API uma única vez por requisição.
     public static function carregar(): void
     {
         if (self::$carregado) {

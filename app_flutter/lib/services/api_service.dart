@@ -17,8 +17,7 @@ class ApiException implements Exception {
 class ApiService {
   static const Duration _timeout = Duration(seconds: 15);
 
-  // Token devolvido pela API no login. Vai em todas as requisições para que
-  // a API saiba qual conta está pedindo e libere só os dados dela.
+  // Token do login, enviado em todas as requisições.
   static String? _token;
 
   static void iniciarSessao(String? token) => _token = token;
