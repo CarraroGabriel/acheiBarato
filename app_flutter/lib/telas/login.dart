@@ -191,14 +191,6 @@ class _LoginState extends State<Login> {
             onPressed: _entrar,
             paddingHorizontal: 150,
           ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: () {
-            _mostrarMensagem('Recuperação de senha ainda não implementada.');
-          },
-          style: TextButton.styleFrom(foregroundColor: Colors.black),
-          child: const Text('Esqueceu a senha?'),
-        ),
         const SizedBox(height: 16),
         const Text('Não possui login?'),
         Row(

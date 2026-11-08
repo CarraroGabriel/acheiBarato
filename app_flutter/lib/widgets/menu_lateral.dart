@@ -66,16 +66,6 @@ class MenuLateral extends StatelessWidget {
             onTap: () => _abrirPerfil(context),
           ),
           ListTile(
-            leading: const Icon(Icons.settings_outlined),
-            title: const Text('Configurações'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.help_outline),
-            title: const Text('Ajuda'),
-            onTap: () {},
-          ),
-          ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Sair', style: TextStyle(color: Colors.red)),
             onTap: () {

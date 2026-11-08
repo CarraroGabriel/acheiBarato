@@ -37,15 +37,6 @@ class BottomNavUsuarios extends StatelessWidget {
           Favoritos(idUsuario: idUsuario, nomeUsuario: nomeUsuario),
         );
         break;
-      case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Pedidos será uma funcionalidade futura do Achei Barato.',
-            ),
-          ),
-        );
-        break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tela ainda não implementada.')),
@@ -83,11 +74,6 @@ class BottomNavUsuarios extends StatelessWidget {
           icon: Icon(Icons.favorite_outline),
           activeIcon: Icon(Icons.favorite),
           label: 'Favoritos',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart_outlined),
-          activeIcon: Icon(Icons.shopping_cart),
-          label: 'Pedidos',
         ),
       ],
     );
