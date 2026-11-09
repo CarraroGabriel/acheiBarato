@@ -125,11 +125,12 @@ class LocalizacaoService {
     required String uf,
   }) async {
     final temNumero = RegExp(r'\d').hasMatch(numero);
-    final tentativas = [if (temNumero) '$numero $rua', rua, ''];
+    // Só a cidade não serve: cairia no centro dela e o mercado ficaria no lugar errado.
+    final tentativas = [if (temNumero) '$numero $rua', rua];
 
     for (final street in tentativas.toSet()) {
       final posicao = await _buscarNominatim({
-        if (street.trim().isNotEmpty) 'street': street,
+        'street': street,
         'city': cidade,
         'state': uf,
         'country': 'Brasil',

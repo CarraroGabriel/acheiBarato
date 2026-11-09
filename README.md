@@ -27,13 +27,13 @@ Com ele, o usuário consegue pesquisar produtos, comparar o preço de um mesmo p
 - **Detalhes do mercado** — endereço, tele-entrega e taxa de entrega, horário de funcionamento (com "aberto agora"), nota média e produtos disponíveis
 - **Avaliação de mercados** — nota de 1 a 5 estrelas (uma por usuário, podendo ser alterada)
 - **Perfil** — edição de nome e e-mail e exclusão da conta
-- **Localização do usuário** pelo GPS do celular ou escolhida como no iFood: **busca pelo nome da rua** ou **pino no mapa** (arrastando o mapa até o local), útil para quem não quer compartilhar a localização ou quer ver mercados perto de outro endereço; a posição é compartilhada entre as telas enquanto o app está aberto
+- **Localização do usuário** pelo GPS do celular ou escolhida como no iFood: **busca pelo nome da rua** ou **pino no mapa** (arrastando o mapa até o local), útil para quem não quer compartilhar a localização ou quer ver mercados perto de outro endereço (sem GPS, nenhum endereço vem preenchido: a pessoa arrasta o pino ou busca o próprio); a posição é compartilhada entre as telas enquanto o app está aberto
 - **Mapa na tela principal** com a posição do usuário e os mercados como pontos, enquadrando os mais próximos; tocar em um mercado mostra a distância e abre seus detalhes
 - **Distância até os mercados** e mercados mais próximos primeiro
 
 ### Para o Lojista
 - **Cadastro do estabelecimento** com **endereço preenchido pelo CEP** (rua, bairro, cidade e UF via ViaCEP; o lojista completa o número); se o endereço não for encontrado no mapa, o app avisa antes de cadastrar sem localização
-- **Localização do mercado no mapa** — as coordenadas são obtidas pelo endereço ao salvar, ou pelo GPS com o botão "Usar minha localização atual", que também preenche o endereço (CEP, rua, número, bairro, cidade e UF) a partir da posição — útil quando o lojista está na loja
+- **Localização do mercado no mapa** — as coordenadas são obtidas pelo endereço ao salvar, ou pelo GPS com o botão "Usar minha localização atual", que também preenche o endereço (CEP, rua, número, bairro, cidade e UF) a partir da posição — útil quando o lojista está na loja. Se a rua não for encontrada, o app avisa e o mercado pode se cadastrar sem localização (coordenadas nulas), em vez de cair no centro da cidade
 - **Painel do lojista** — visão geral com produtos cadastrados, em promoção, disponíveis, com estoque baixo e indisponíveis, nota média, quantidade de favoritos e avisos de informações faltando (horário e foto)
 - **Notificações push** quando um produto fica com **estoque baixo** (5 unidades ou menos) ou é marcado como **indisponível**, com histórico no sino do painel (mesmas opções de limpeza)
 - **Gestão de produtos** — lista completa com filtros por situação (promoção, disponíveis, indisponíveis, estoque baixo) e por categoria

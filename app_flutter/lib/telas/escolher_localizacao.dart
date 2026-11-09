@@ -22,6 +22,7 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
   final _buscaFoco = FocusNode();
 
   late LatLng _centro;
+  late bool _escolhido;
   EnderecoPosicao? _endereco;
   bool _buscandoEndereco = false;
   bool _buscandoGps = false;
@@ -39,7 +40,9 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
     _centro = atual == null
         ? _centroPadrao
         : LatLng(atual.latitude, atual.longitude);
-    _atualizarEndereco();
+    // Sem posição, o mapa só abre na região; o local é o que a pessoa escolher.
+    _escolhido = atual != null;
+    if (_escolhido) _atualizarEndereco();
   }
 
   @override
@@ -59,7 +62,10 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
     if (!porGesto) return;
 
     _esperaMapa?.cancel();
-    setState(() => _buscandoEndereco = true);
+    setState(() {
+      _escolhido = true;
+      _buscandoEndereco = true;
+    });
     _esperaMapa = Timer(const Duration(milliseconds: 700), _atualizarEndereco);
   }
 
@@ -119,6 +125,7 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
 
     setState(() {
       _centro = ponto;
+      _escolhido = true;
       _endereco = resultado.endereco;
       _resultados = [];
       _buscandoEndereco = false;
@@ -147,6 +154,14 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
 
   void _confirmar() {
     if (_buscandoEndereco) return;
+    if (!_escolhido) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Arraste o mapa até o seu local ou busque o endereço.'),
+        ),
+      );
+      return;
+    }
 
     final endereco = _endereco;
     final descricao = endereco == null
@@ -226,7 +241,7 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
           mapController: _mapController,
           options: MapOptions(
             initialCenter: _centro,
-            initialZoom: 16,
+            initialZoom: _escolhido ? 16 : 13,
             minZoom: 4,
             maxZoom: 19,
             interactionOptions: const InteractionOptions(
@@ -289,7 +304,10 @@ class _EscolherLocalizacaoState extends State<EscolherLocalizacao> {
     final String titulo;
     final String? subtitulo;
 
-    if (_buscandoEndereco) {
+    if (!_escolhido) {
+      titulo = 'Nenhum local escolhido';
+      subtitulo = 'Arraste o mapa ou busque o endereço acima';
+    } else if (_buscandoEndereco) {
       titulo = 'Buscando endereço...';
       subtitulo = null;
     } else if (e == null) {
