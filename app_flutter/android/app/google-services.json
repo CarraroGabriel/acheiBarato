@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "419735213178",
+    "project_id": "acheibarato-65669",
+    "storage_bucket": "acheibarato-65669.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:419735213178:android:2305349fbd5747106217c3",
+        "android_client_info": {
+          "package_name": "com.example.achei_barato"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvAM9M8vvk0jjdmVnw_YZfa4hPcHnQaMA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

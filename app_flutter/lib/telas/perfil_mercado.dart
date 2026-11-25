@@ -1,0 +1,573 @@
+import 'package:flutter/material.dart';
+import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/services/notificacao_service.dart';
+import 'package:achei_barato/widgets/app_bar.dart';
+import 'package:achei_barato/widgets/horario_funcionamento.dart';
+import 'package:achei_barato/widgets/imagem_app.dart';
+import 'package:achei_barato/widgets/tempo_promocao.dart';
+
+class PerfilMercado extends StatefulWidget {
+  final int idMercado;
+  final int? idUsuario;
+
+  const PerfilMercado({super.key, required this.idMercado, this.idUsuario});
+
+  @override
+  State<PerfilMercado> createState() => _PerfilMercadoState();
+}
+
+class _PerfilMercadoState extends State<PerfilMercado> {
+  bool _carregando = true;
+  String? _erro;
+  Map<String, dynamic>? _mercado;
+  List<Map<String, dynamic>> _produtos = [];
+  bool _favorito = false;
+  bool _alternandoFavorito = false;
+  int? _minhaNota;
+  bool _enviandoAvaliacao = false;
+
+  bool get _podeFavoritar => widget.idUsuario != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+    _carregarFavorito();
+    _carregarMinhaAvaliacao();
+  }
+
+  Future<void> _carregarDados() async {
+    setState(() {
+      _carregando = true;
+      _erro = null;
+    });
+
+    try {
+      final resultados = await Future.wait([
+        ApiService.get('mercados/${widget.idMercado}'),
+        ApiService.get('produto_mercado?mercado=${widget.idMercado}'),
+      ]);
+
+      if (!mounted) return;
+
+      final produtos = _listaDeMapas(resultados[1]['dados']);
+
+      setState(() {
+        _mercado = Map<String, dynamic>.from(resultados[0]['dados'] as Map);
+        // O cliente só vê o que está disponível.
+        _produtos = produtos.where((p) => _toBool(p['fl_disponivel'])).toList();
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _erro = e.mensagem);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _erro = 'Não foi possível conectar ao servidor.');
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  Future<void> _carregarFavorito() async {
+    if (!_podeFavoritar) return;
+    try {
+      final r = await ApiService.get(
+        'mercado_favorito?id_usuario=${widget.idUsuario}&id_mercado=${widget.idMercado}',
+      );
+      if (mounted) setState(() => _favorito = r['dados']['favorito'] == true);
+    } catch (_) {}
+  }
+
+  Future<void> _alternarFavorito() async {
+    if (_alternandoFavorito) return;
+    setState(() => _alternandoFavorito = true);
+    try {
+      if (_favorito) {
+        await ApiService.delete(
+          'mercado_favorito?id_usuario=${widget.idUsuario}&id_mercado=${widget.idMercado}',
+        );
+      } else {
+        await ApiService.post('mercado_favorito', {
+          'id_usuario': widget.idUsuario,
+          'id_mercado': widget.idMercado,
+        });
+      }
+      NotificacaoService.seguirMercado(widget.idMercado, !_favorito);
+      if (mounted) setState(() => _favorito = !_favorito);
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível conectar ao servidor.');
+    } finally {
+      if (mounted) setState(() => _alternandoFavorito = false);
+    }
+  }
+
+  Future<void> _carregarMinhaAvaliacao() async {
+    if (!_podeFavoritar) return;
+    try {
+      final r = await ApiService.get(
+        'mercados/${widget.idMercado}/avaliacao?id_usuario=${widget.idUsuario}',
+      );
+      final nota = int.tryParse((r['dados']['nu_nota'] ?? '').toString());
+      if (mounted) setState(() => _minhaNota = nota);
+    } catch (_) {}
+  }
+
+  Future<void> _abrirAvaliacao() async {
+    var nota = _minhaNota ?? 0;
+
+    final escolhida = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setStateDialog) => AlertDialog(
+          title: Text(
+            _minhaNota == null ? 'Avaliar mercado' : 'Alterar avaliação',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Quantas estrelas você dá para '
+                '${_mercado?['nm_mercado'] ?? 'este mercado'}?',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  5,
+                  (i) => IconButton(
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 34,
+                    onPressed: () => setStateDialog(() => nota = i + 1),
+                    icon: Icon(
+                      i < nota ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: nota == 0
+                  ? null
+                  : () => Navigator.pop(dialogContext, nota),
+              child: const Text('Enviar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (escolhida != null) _enviarAvaliacao(escolhida);
+  }
+
+  Future<void> _enviarAvaliacao(int nota) async {
+    setState(() => _enviandoAvaliacao = true);
+
+    try {
+      final r = await ApiService.post(
+        'mercados/${widget.idMercado}/avaliacao',
+        {'id_usuario': widget.idUsuario, 'nu_nota': nota},
+      );
+      final dados = Map<String, dynamic>.from(r['dados'] as Map);
+
+      if (!mounted) return;
+
+      setState(() {
+        _minhaNota = nota;
+        _mercado?['nu_avg_nota'] = dados['nu_avg_nota'];
+        _mercado?['nul_avaliacoes'] = dados['nul_avaliacoes'];
+      });
+      _mostrarMensagem((r['mensagem'] ?? 'Avaliação registrada.').toString());
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível conectar ao servidor.');
+    } finally {
+      if (mounted) setState(() => _enviandoAvaliacao = false);
+    }
+  }
+
+  void _mostrarMensagem(String m) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  }
+
+  List<Map<String, dynamic>> _listaDeMapas(dynamic dados) {
+    if (dados is! List) return [];
+    return dados
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: const AcheiBaratoAppBar(), body: _buildBody());
+  }
+
+  Widget _buildBody() {
+    if (_carregando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_erro != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_erro!),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: _carregarDados,
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final mercado = _mercado ?? {};
+    final temMotoboy = _toBool(mercado['fl_motoboy']);
+
+    return RefreshIndicator(
+      onRefresh: _carregarDados,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomCenter,
+              children: [
+                Container(height: 130, color: Colors.red),
+                Positioned(
+                  bottom: -50,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: ClipOval(
+                        child: ImagemApp(
+                          caminhos: [mercado['ds_foto_mercado']],
+                          iconePadrao: Icons.store,
+                          tamanhoIcone: 50,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 60),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      (mercado['nm_mercado'] ?? 'Mercado').toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (_podeFavoritar)
+                    IconButton(
+                      onPressed: _alternarFavorito,
+                      icon: Icon(
+                        _favorito ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildChip(
+                    icon: Icons.star,
+                    iconColor: Colors.amber,
+                    label:
+                        '${_formatarNota(mercado['nu_avg_nota'])}  •  ${_toInt(mercado['nul_avaliacoes'])} avaliações',
+                    bgColor: Colors.amber.shade50,
+                  ),
+                  _buildChip(
+                    icon: Icons.delivery_dining,
+                    iconColor: temMotoboy
+                        ? Colors.green.shade600
+                        : Colors.grey.shade600,
+                    label: temMotoboy
+                        ? _textoTaxaEntrega(mercado['nu_taxa_entrega'])
+                        : 'Sem tele-entrega',
+                    bgColor: temMotoboy
+                        ? Colors.green.shade50
+                        : Colors.grey.shade100,
+                  ),
+                ],
+              ),
+            ),
+            if (_podeFavoritar) ...[
+              const SizedBox(height: 12),
+              Center(
+                child: _enviandoAvaliacao
+                    ? const CircularProgressIndicator()
+                    : OutlinedButton.icon(
+                        onPressed: _abrirAvaliacao,
+                        icon: Icon(
+                          _minhaNota == null ? Icons.star_border : Icons.star,
+                          color: Colors.amber,
+                        ),
+                        label: Text(
+                          _minhaNota == null
+                              ? 'Avaliar mercado'
+                              : 'Sua avaliação: $_minhaNota ★  •  Alterar',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                      ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.location_on, color: Colors.red, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _textoEndereco(mercado),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: HorarioFuncionamento(horarios: mercado['horarios']),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.shopping_basket, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Produtos do Mercado',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_produtos.isEmpty)
+                    const Text('Nenhum produto disponível no momento.')
+                  else
+                    ..._produtos.map(_buildCardProduto),
+                ],
+              ),
+            ),
+            const SizedBox(height: 80),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChip({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required Color bgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: iconColor, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardProduto(Map<String, dynamic> produto) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 60,
+              height: 60,
+              child: ImagemApp.produto(produto),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  (produto['ds_item_produto'] ?? produto['nm_produto'] ?? '')
+                      .toString(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${produto['nm_marca'] ?? ''} • ${produto['ds_categoria'] ?? ''}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (_toBool(produto['fl_promocao']))
+                const Text(
+                  'PROMO',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              Text(
+                _formatarValor(
+                  produto['nu_valor_final'] ?? produto['nu_valor'],
+                ),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+              if (_toBool(produto['fl_promocao']))
+                TempoPromocao(
+                  segundosRestantes: produto['nu_segundos_restantes'],
+                  tamanhoFonte: 10,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatarValor(dynamic valor) {
+    final numero = double.tryParse(valor.toString().replaceAll(',', '.')) ?? 0;
+    return 'R\$ ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  String _textoEndereco(Map<String, dynamic> mercado) {
+    final numero = (mercado['nu_numero'] ?? '').toString();
+    final bairro = (mercado['nm_bairro'] ?? '').toString();
+    final cidade = (mercado['nm_cidade'] ?? '').toString();
+    final uf = (mercado['sg_uf'] ?? '').toString();
+    final cep = (mercado['nu_cep'] ?? '').toString().padLeft(8, '0');
+
+    var linha1 = (mercado['nm_endereco'] ?? '').toString();
+    if (numero.isNotEmpty) linha1 += ', $numero';
+    if (bairro.isNotEmpty) linha1 += ' - $bairro';
+
+    final cepFormatado = '${cep.substring(0, 5)}-${cep.substring(5)}';
+    final linha2 = cidade.isEmpty
+        ? 'CEP $cepFormatado'
+        : '$cidade/$uf · CEP $cepFormatado';
+
+    return '$linha1\n$linha2';
+  }
+
+  String _textoTaxaEntrega(dynamic taxa) {
+    final valor = double.tryParse((taxa ?? '').toString()) ?? 0;
+    return valor <= 0
+        ? 'Tele-entrega grátis'
+        : 'Tele-entrega: ${_formatarValor(valor)}';
+  }
+
+  String _formatarNota(dynamic valor) {
+    final numero = double.tryParse(valor.toString().replaceAll(',', '.')) ?? 0;
+    return numero.toStringAsFixed(1);
+  }
+
+  int _toInt(dynamic valor) => int.tryParse(valor.toString()) ?? 0;
+
+  bool _toBool(dynamic valor) {
+    if (valor is bool) return valor;
+    return valor.toString().toLowerCase() == 'true' || valor.toString() == '1';
+  }
+}

@@ -1,0 +1,17 @@
+# Bloqueia o acesso a arquivos sensíveis: ocultos (.env, .htaccess)
+# e chaves .json (ex.: config/firebase-chave.json).
+<FilesMatch "(^\.|\.json$)">
+    Require all denied
+</FilesMatch>
+
+# Repassa o cabeçalho Authorization (token de login) para o PHP.
+<IfModule mod_setenvif.c>
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^(.*)$ public/index.php [QSA,L]

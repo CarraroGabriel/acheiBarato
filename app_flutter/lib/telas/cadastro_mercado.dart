@@ -1,0 +1,189 @@
+import 'package:flutter/material.dart';
+import 'package:achei_barato/services/api_service.dart';
+import 'package:achei_barato/telas/login.dart';
+import 'package:achei_barato/widgets/botao_primario.dart';
+import 'package:achei_barato/widgets/campos_endereco.dart';
+import 'package:achei_barato/widgets/tela_base.dart';
+
+class CadastroMercado extends StatefulWidget {
+  const CadastroMercado({super.key});
+
+  @override
+  State<CadastroMercado> createState() => _CadastroMercadoState();
+}
+
+class _CadastroMercadoState extends State<CadastroMercado> {
+  final _nomeController = TextEditingController();
+  final _cnpjController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _endereco = EnderecoMercado();
+  final _senhaController = TextEditingController();
+  final _confirmarSenhaController = TextEditingController();
+
+  bool _carregando = false;
+
+  @override
+  void dispose() {
+    _nomeController.dispose();
+    _cnpjController.dispose();
+    _emailController.dispose();
+    _endereco.dispose();
+    _senhaController.dispose();
+    _confirmarSenhaController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cadastrar() async {
+    if (_senhaController.text != _confirmarSenhaController.text) {
+      _mostrarMensagem('As senhas não coincidem.');
+      return;
+    }
+
+    final erroEndereco = _endereco.validar();
+    if (erroEndereco != null) {
+      _mostrarMensagem(erroEndereco);
+      return;
+    }
+
+    setState(() => _carregando = true);
+
+    try {
+      final localizado = await _endereco.resolverCoordenadas();
+      if (!localizado && !_endereco.temCoordenadas) {
+        if (!mounted) return;
+        setState(() => _carregando = false);
+        if (!await _confirmarSemLocalizacao()) return;
+        setState(() => _carregando = true);
+      }
+
+      await ApiService.post('mercados', {
+        'nu_cnpj': _cnpjController.text,
+        'nm_mercado': _nomeController.text.trim(),
+        'ds_email': _emailController.text.trim(),
+        ..._endereco.paraApi(),
+        'ds_senha': _senhaController.text,
+        'fl_motoboy': false,
+        'ds_foto_mercado': '',
+        'nu_avg_nota': 0,
+        'nul_avaliacoes': 0,
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mercado cadastrado com sucesso.')),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Login(isUsuario: false)),
+      );
+    } on ApiException catch (e) {
+      _mostrarMensagem(e.mensagem);
+    } catch (_) {
+      _mostrarMensagem('Não foi possível conectar ao servidor.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  Future<bool> _confirmarSemLocalizacao() async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Endereço não encontrado no mapa'),
+        content: const Text(
+          'Sem a localização, os clientes não verão a distância até o mercado '
+          'nem o encontrarão no mapa. Confira o endereço ou use o botão '
+          '"Usar minha localização atual". Você também pode cadastrar assim '
+          'e ajustar depois no perfil do mercado.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Ajustar endereço'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cadastrar assim'),
+          ),
+        ],
+      ),
+    );
+    return confirmou == true;
+  }
+
+  void _mostrarMensagem(String mensagem) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TelaBase(
+      children: [
+        const Text(
+          'Faça seu Cadastro',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _nomeController,
+          decoration: const InputDecoration(
+            labelText: 'Nome do Mercado',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.person),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _cnpjController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'CNPJ',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.business),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.email),
+          ),
+        ),
+        const SizedBox(height: 16),
+        CamposEndereco(endereco: _endereco),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _senhaController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'Senha',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.lock),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _confirmarSenhaController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'Confirme a Senha',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.lock),
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (_carregando)
+          const CircularProgressIndicator()
+        else
+          BotaoPrimario(texto: 'Cadastrar-se', onPressed: _cadastrar),
+      ],
+    );
+  }
+}
